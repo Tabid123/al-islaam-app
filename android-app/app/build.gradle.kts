@@ -1,4 +1,4 @@
-// Build trigger: v5.5 rename to Riyokaab Transfer
+// Build trigger: v5.5 rename to Al-islaam Transfer
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.riyokaab.delivery"
+    namespace = "com.alislaam.delivery"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.riyokaab.delivery"
+        applicationId = "com.alislaam.delivery"
         minSdk = 23
         targetSdk = 34
         versionCode = 1

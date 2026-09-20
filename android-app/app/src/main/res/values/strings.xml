@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Riyokaab Delivery</string>
-    
-    <!-- Accessibility Service -->
-    <string name="accessibility_service_label">Riyokaab Delivery USSD Automation</string>
-    <string name="accessibility_service_description">Allows Riyokaab Delivery to automatically read and process USSD responses for mobile data delivery. This service only activates during payment transactions.</string>
+    <string name="app_name">Al-islaam Delivery</string>
+    <string name="accessibility_service_label">Al-islaam Delivery USSD Automation</string>
+    <string name="accessibility_service_description">Allows Al-islaam Delivery to automatically read and process USSD responses for mobile data delivery. This service only activates during payment transactions.</string>
 </resources>
