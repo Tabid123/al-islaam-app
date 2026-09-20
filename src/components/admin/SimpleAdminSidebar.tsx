@@ -21,7 +21,7 @@ import {
   Star, Layers, Zap, ImageIcon, WifiOff, ShieldCheck, FileText,
   Receipt, Moon, Sun, Globe, Banknote, TrendingUp,
 } from 'lucide-react';
-import riyokaabLogo from '@/assets/riyokaab-logo.jpeg';
+import riyokaabLogo from '@/assets/al-islaam-logo.svg';
 import { useAdminPermissions, DETAIL_PERMISSIONS } from '@/hooks/useAdminPermissions';
 
 interface MenuItem {
