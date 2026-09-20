@@ -1,4 +1,4 @@
-package com.riyokaab.delivery.worker
+package com.alislaam.delivery.worker
 
 import android.app.ActivityManager
 import android.content.Context
@@ -6,7 +6,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.riyokaab.delivery.service.UssdDialerService
+import com.alislaam.delivery.service.UssdDialerService
 
 /**
  * Watchdog worker that monitors UssdDialerService and restarts it if stopped.
@@ -23,7 +23,7 @@ class ServiceWatchdogWorker(
         
         try {
             val isRunning = isServiceRunning()
-            val prefs = context.getSharedPreferences("riyokaab_watchdog", Context.MODE_PRIVATE)
+            val prefs = context.getSharedPreferences("alislaam_watchdog", Context.MODE_PRIVATE)
             
             var consecutiveFailures = prefs.getInt("consecutive_failures", 0)
             

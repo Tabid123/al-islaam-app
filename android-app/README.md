@@ -1,9 +1,9 @@
-# Riyokaab Data Delivery - Android App
+# Al-islaam Data Delivery - Android App
 
 ## 🎯 Overview
 
 This Android app automates data package delivery by:
-- Polling the Riyokaab Data API every 5 seconds for new orders
+- Polling the Al-islaam Data API every 5 seconds for new orders
 - Automatically dialing USSD codes on the correct SIM (Hormuud Slot 1, Somnet Slot 2)
 - Running 24/7 as a background service
 - Reporting delivery status back to the server
@@ -20,7 +20,7 @@ android-app/
 │   ├── src/main/
 │   │   ├── kotlin/com/iftin/delivery/
 │   │   │   ├── MainActivity.kt              # Main UI with dashboard
-│   │   │   ├── RiyokaabDataApp.kt              # Application class
+│   │   │   ├── Al-islaamDataApp.kt              # Application class
 │   │   │   ├── service/
 │   │   │   │   └── UssdDialerService.kt     # Background service (24/7)
 │   │   │   ├── api/
@@ -157,27 +157,27 @@ android-app/
 
 ### Local Testing
 1. Start the service
-2. Check notification: "Riyokaab Delivery Active"
+2. Check notification: "Al-islaam Delivery Active"
 3. Create test order from website
 4. Watch phone dial USSD automatically
 5. Check dashboard stats update
 
 ### View Logs
 ```bash
-adb logcat -s RiyokaabDelivery
+adb logcat -s Al-islaamDelivery
 ```
 
 ---
 
 ## 📄 License
 
-Proprietary - Riyokaab Data © 2025
+Proprietary - Al-islaam Data © 2025
 
 ---
 
 ## 👥 Credits
 
-**Developed for**: Riyokaab Data (Somalia)  
+**Developed for**: Al-islaam Data (Somalia)  
 **Platform**: Android (Kotlin)  
 **Backend**: Supabase Edge Functions  
 **Target Device**: Samsung Galaxy M31  

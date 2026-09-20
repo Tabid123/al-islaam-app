@@ -1,9 +1,9 @@
-# Riyokaab Data Delivery - Android App Setup Guide
+# Al-islaam Data Delivery - Android App Setup Guide
 
 ## 📱 What This App Does
 
 This Android app runs 24/7 on your Samsung Galaxy M31 and automatically:
-- Polls the Riyokaab Data server every 5 seconds for new package orders
+- Polls the Al-islaam Data server every 5 seconds for new package orders
 - Dials USSD codes using the correct SIM (Hormuud Slot 1, Somnet Slot 2)
 - Activates data packages automatically without any manual work
 - Reports success/failure back to the server
@@ -54,7 +54,7 @@ This Android app runs 24/7 on your Samsung Galaxy M31 and automatically:
 - Make sure both SIMs have credit for testing
 
 #### B. Disable Battery Optimization
-1. Open the Riyokaab Delivery app
+1. Open the Al-islaam Delivery app
 2. Tap **"DISABLE BATTERY OPTIMIZATION"** button
 3. Select "Allow" when prompted
 4. **CRITICAL**: This prevents Android from killing the app!
@@ -69,20 +69,20 @@ This Android app runs 24/7 on your Samsung Galaxy M31 and automatically:
 2. Set **Screen timeout** to "Never" or maximum (30 minutes)
 
 #### E. Allow Background Data
-1. Go to **Settings → Apps → Riyokaab Delivery**
+1. Go to **Settings → Apps → Al-islaam Delivery**
 2. Tap **Mobile data**
 3. Enable **"Background data"** and **"Unrestricted data usage"**
 
 #### F. Enable Autostart
-1. Go to **Settings → Apps → Riyokaab Delivery**
+1. Go to **Settings → Apps → Al-islaam Delivery**
 2. Look for **"Autostart"** or **"Battery"**
 3. Enable **"Allow autostart"**
 
 ### Step 4: Start the Service
 
-1. Open the Riyokaab Delivery app
+1. Open the Al-islaam Delivery app
 2. Tap the **"START SERVICE"** button (green)
-3. You'll see a persistent notification: **"Riyokaab Delivery Active"**
+3. You'll see a persistent notification: **"Al-islaam Delivery Active"**
 4. The app is now running in the background! 🎉
 
 ### Step 5: Keep Phone Charging
@@ -101,7 +101,7 @@ This Android app runs 24/7 on your Samsung Galaxy M31 and automatically:
 3. Stats should show **"Total: 0, Success: 0"**
 
 ### Test 2: Create a Test Order (From Website)
-1. Go to your Riyokaab Data website
+1. Go to your Al-islaam Data website
 2. Make a test purchase (use test payment)
 3. Within 5-10 seconds, phone should automatically:
    - Dial the USSD code

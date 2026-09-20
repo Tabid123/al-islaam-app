@@ -1,4 +1,4 @@
-package com.riyokaab.delivery.service
+package com.alislaam.delivery.service
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

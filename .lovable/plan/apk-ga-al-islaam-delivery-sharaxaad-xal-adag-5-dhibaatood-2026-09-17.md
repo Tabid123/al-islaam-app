@@ -1,4 +1,4 @@
-# APK-ga Riyokaab Delivery — sharaxaad + xal adag (5 dhibaatood)
+# APK-ga Al-islaam Delivery — sharaxaad + xal adag (5 dhibaatood)
 
 ## Sida nidaamku hadda u shaqeeyo (si aad u fahanto)
 
@@ -87,7 +87,7 @@ u dambeeyay ayuu qaataa. Sidaa darteed dalabku wuu dhici karaa inuu guuleystay, 
 Splash-kuna refresh ayuu isku dayayaa ka hor inta aanu Login ku celin. Log out waxaa keliya sameeyn kara
 adiga.
 
-### Dheeraad: "Riyokaab Delivery isn't responding" (ANR)
+### Dheeraad: "Al-islaam Delivery isn't responding" (ANR)
 **Sababta:** watchdog-gu 15 daqiiqo kasta service-ka wuu joojiyaa kadibna wuu bilaabaa (`stopService` +
 `Thread.sleep`) xitaa marka dalab socdo; shaqooyin culus sida akhrinta SMS inbox ayaa main thread saaran.
 **Xalka:** watchdog-gu service-ka ma joojinayo hadii uu shaqaynayo; shaqada culus dhammaan background ayey
