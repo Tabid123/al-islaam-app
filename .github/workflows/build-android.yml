@@ -24,7 +24,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Deleting old artifacts for this workflow to keep storage quota low..."
-          gh api "repos/${{ github.repository }}/actions/artifacts" --paginate -q '.artifacts[] | select(.name == "riyokaab-delivery-apk") | .id' | while read -r artifact_id; do
+          gh api "repos/${{ github.repository }}/actions/artifacts" --paginate -q '.artifacts[] | select(.name == "al-islaam-delivery-apk") | .id' | while read -r artifact_id; do
             echo "Deleting artifact $artifact_id"
             gh api --method DELETE "repos/${{ github.repository }}/actions/artifacts/$artifact_id" || true
           done
@@ -52,7 +52,7 @@ jobs:
       - name: Rename APK
         run: |
           mkdir -p apk-output
-          cp android-app/app/build/outputs/apk/debug/app-debug.apk apk-output/riyokaab-delivery.apk
+          cp android-app/app/build/outputs/apk/debug/app-debug.apk apk-output/al-islaam-delivery.apk
 
       # GitHub Releases do not count against artifact storage quota.
       # We recreate the 'android-latest' release on every build so the APK is always reachable.
@@ -60,9 +60,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-latest
-          name: Riyokaab Delivery APK (latest)
+          name: Al-islaam Delivery APK (latest)
           body: "Debug APK built from commit ${{ github.sha }}"
-          files: apk-output/riyokaab-delivery.apk
+          files: apk-output/al-islaam-delivery.apk
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -71,6 +71,6 @@ jobs:
         continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
-          name: riyokaab-delivery-apk
-          path: apk-output/riyokaab-delivery.apk
+          name: al-islaam-delivery-apk
+          path: apk-output/al-islaam-delivery.apk
           retention-days: 5
