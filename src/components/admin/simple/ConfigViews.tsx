@@ -898,7 +898,7 @@ export const BannersCustomView = ({ isSo }: { isSo: boolean }) => {
   return (
     <div className="space-y-3">
       <StatCardsRow cards={[
-        { label: 'Total', value: banners.length, icon: Image, color: 'bg-rose-500' },
+        { label: 'Total', value: banners.length, icon: Image, color: 'bg-green-600' },
         { label: 'Active', value: banners.filter(b => b.is_active).length, icon: CheckCircle, color: 'bg-green-500' },
       ]} />
       <button onClick={() => { setShowAdd(!showAdd); setEditingId(null); setNewBanner({ banner_image: '', alt_text: '' }); }}

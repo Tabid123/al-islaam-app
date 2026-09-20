@@ -99,7 +99,7 @@ const DETAIL_CONFIGS: Record<string, DetailConfig> = {
   packages: { title: 'Packages', titleSo: 'Packages', headerBg: 'from-cyan-500 to-cyan-700' },
   categories: { title: 'Categories', titleSo: 'Categories', headerBg: 'from-emerald-500 to-emerald-700' },
   featured: { title: 'Featured', titleSo: 'Featured', headerBg: 'from-amber-500 to-amber-700' },
-  banners: { title: 'Banners', titleSo: 'Banners', headerBg: 'from-rose-500 to-rose-700' },
+  banners: { title: 'Banners', titleSo: 'Banners', headerBg: 'from-green-600 to-green-800' },
   'payment-settings': { title: 'Payment Providers', titleSo: 'Payment Settings', headerBg: 'from-violet-500 to-violet-700' },
   'system-codes': { title: 'System Codes', titleSo: 'USSD Codes', headerBg: 'from-indigo-600 to-indigo-800' },
   apps: { title: 'Apps', titleSo: 'Apps', headerBg: 'from-green-600 to-green-800' },

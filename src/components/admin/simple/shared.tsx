@@ -168,26 +168,49 @@ export const ImageUploader = ({ value, onChange, bucket, label }: { value: strin
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowed.includes(file.type)) {
+      toast.error('Fadlan dooro JPG, PNG, WEBP ama GIF.');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Sawirku waa inuu ka yaraadaa 10MB.');
+      e.target.value = '';
+      return;
+    }
+
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop();
-      const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error } = await supabase.storage.from(bucket).upload(fileName, file, { upsert: true });
+      const safeExt = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const fileName = `${Date.now()}_${crypto.randomUUID().slice(0, 8)}.${safeExt}`;
+      const { error } = await supabase.storage.from(bucket).upload(fileName, file, {
+        upsert: false,
+        contentType: file.type,
+        cacheControl: '3600',
+      });
       if (error) throw error;
-      // Try signed URL (works for private buckets); fallback to public URL
-      const TEN_YEARS = 60 * 60 * 24 * 365 * 10;
-      const { data: signed } = await supabase.storage.from(bucket).createSignedUrl(fileName, TEN_YEARS);
-      let finalUrl = signed?.signedUrl;
-      if (!finalUrl) {
-        const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fileName);
-        finalUrl = urlData.publicUrl;
-      }
+
+      // Al-islaam image buckets are public; use stable public URLs rather than expiring signed URLs.
+      const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(fileName);
+      const finalUrl = publicData?.publicUrl;
+      if (!finalUrl) throw new Error('Public URL lama helin');
+
       onChange(finalUrl);
-      toast.success('Image uploaded!');
+      toast.success('Sawirka waa la geliyay!');
     } catch (err: any) {
-      toast.error('Upload failed: ' + (err.message || 'Unknown error'));
+      const msg = String(err?.message || 'Unknown error');
+      if (/bucket.*not.*found|not found.*bucket/i.test(msg)) {
+        toast.error('Storage bucket-ka lama helin. Fadlan deploy-garee Al-islaam storage migration-ka.');
+      } else if (/row-level security|policy|permission|unauthorized|forbidden/i.test(msg)) {
+        toast.error('Upload permission ma lihid. Dib u gal admin-ka kadib isku day.');
+      } else {
+        toast.error('Upload failed: ' + msg);
+      }
     } finally {
       setUploading(false);
+      e.target.value = '';
     }
   };
 
@@ -196,10 +219,10 @@ export const ImageUploader = ({ value, onChange, bucket, label }: { value: strin
       <div className="text-[11px] text-gray-500 font-medium">{label}</div>
       <div className="flex items-center gap-2">
         {value && <img src={value} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0 border" />}
-        <label className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border-2 border-dashed cursor-pointer transition-all ${uploading ? 'border-gray-300 bg-gray-50' : 'border-purple-300 bg-purple-50/50 hover:bg-purple-100/50 dark:border-purple-700 dark:bg-purple-950/20'}`}>
-          {uploading ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <Upload className="w-4 h-4 text-purple-500" />}
-          <span className="text-xs font-medium text-purple-600 dark:text-purple-400">{uploading ? 'Uploading...' : (value ? 'Change' : 'Upload from Gallery')}</span>
-          <input type="file" accept="image/*" onChange={handleUpload} className="hidden" disabled={uploading} />
+        <label className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border-2 border-dashed cursor-pointer transition-all ${uploading ? 'border-gray-300 bg-gray-50' : 'border-green-300 bg-green-50/50 hover:bg-green-100/50 dark:border-green-700 dark:bg-green-950/20'}`}>
+          {uploading ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <Upload className="w-4 h-4 text-green-600" />}
+          <span className="text-xs font-medium text-green-700 dark:text-green-400">{uploading ? 'Uploading...' : (value ? 'Change' : 'Upload from Gallery')}</span>
+          <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleUpload} className="hidden" disabled={uploading} />
         </label>
       </div>
       <input value={value} onChange={e => onChange(e.target.value)} placeholder="Or paste URL..." className="w-full px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-700 border text-[11px] outline-none text-gray-500" />
