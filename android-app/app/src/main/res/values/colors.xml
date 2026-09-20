@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Riyokaab Data Brand Colors -->
+    <color name="riyokaab_purple">#006f00</color>
+    <color name="riyokaab_purple_dark">#2A0047</color>
+    <color name="riyokaab_purple_light">#5C1A8C</color>
+    <color name="riyokaab_lime">#C5F82A</color>
+    <color name="splash_background">#006f00</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+</resources>

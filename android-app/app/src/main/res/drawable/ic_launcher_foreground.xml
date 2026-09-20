@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Background fill - Riyokaab purple -->
+    <path
+        android:fillColor="#3D0066"
+        android:pathData="M0,0h108v108h-108z" />
+    
+    <!-- Letter N - Lime green - large and centered -->
+    <path
+        android:fillColor="#C5F82A"
+        android:pathData="M30,28h10l20,32V28h10v52H60L40,48v32H30z" />
+    
+    <!-- WiFi signal dot -->
+    <path
+        android:fillColor="#C5F82A"
+        android:pathData="M70,32a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    
+    <!-- WiFi arc 1 -->
+    <path
+        android:pathData="M73,28c4,-4 10,-4 14,0"
+        android:strokeWidth="2.5"
+        android:strokeColor="#C5F82A"
+        android:fillColor="#00000000" />
+    
+    <!-- WiFi arc 2 -->
+    <path
+        android:pathData="M70,24c6,-6 16,-6 22,0"
+        android:strokeWidth="2.5"
+        android:strokeColor="#C5F82A"
+        android:fillColor="#00000000" />
+    
+    <!-- WiFi arc 3 -->
+    <path
+        android:pathData="M67,20c8,-8 22,-8 30,0"
+        android:strokeWidth="2.5"
+        android:strokeColor="#C5F82A" />
+</vector>

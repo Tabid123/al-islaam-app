@@ -1,0 +1,11 @@
+const noop: any = async () => {};
+export default new Proxy({}, { get: () => noop });
+export const initFirebase = noop;
+export const initializeFirebase = noop;
+export const logEvent = noop;
+export const logScreenView = noop;
+export const logPurchase = noop;
+export const setUserId = noop;
+export const setUserProperty = noop;
+export const logCrash = noop;
+export const recordError = noop;

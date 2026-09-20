@@ -1,0 +1,76 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android-app/**'
+      - '.github/workflows/build-android.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Delete old GitHub artifacts before build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Deleting old artifacts for this workflow to keep storage quota low..."
+          gh api "repos/${{ github.repository }}/actions/artifacts" --paginate -q '.artifacts[] | select(.name == "riyokaab-delivery-apk") | .id' | while read -r artifact_id; do
+            echo "Deleting artifact $artifact_id"
+            gh api --method DELETE "repos/${{ github.repository }}/actions/artifacts/$artifact_id" || true
+          done
+          echo "Old artifact cleanup done."
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
+
+      - name: Grant execute permission for gradlew
+        working-directory: android-app
+        run: chmod +x gradlew
+
+      - name: Build Debug APK
+        working-directory: android-app
+        run: ./gradlew assembleDebug --no-daemon --console=plain
+
+      - name: Rename APK
+        run: |
+          mkdir -p apk-output
+          cp android-app/app/build/outputs/apk/debug/app-debug.apk apk-output/riyokaab-delivery.apk
+
+      # GitHub Releases do not count against artifact storage quota.
+      # We recreate the 'android-latest' release on every build so the APK is always reachable.
+      - name: Publish APK to rolling GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-latest
+          name: Riyokaab Delivery APK (latest)
+          body: "Debug APK built from commit ${{ github.sha }}"
+          files: apk-output/riyokaab-delivery.apk
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload APK artifact (best effort)
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: riyokaab-delivery-apk
+          path: apk-output/riyokaab-delivery.apk
+          retention-days: 5

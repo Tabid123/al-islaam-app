@@ -1,0 +1,64 @@
+name: Wire Admin Apps Tab
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/add-admin-apps-tab.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch admin Apps tab
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          dashboard = Path('src/pages/AdminDashboard.tsx')
+          text = dashboard.read_text()
+          lazy_anchor = "const AppSettings = React.lazy(() => import('@/components/admin/AppSettings'));"
+          lazy_line = "const AppReleasesManager = React.lazy(() => import('@/components/admin/AppReleasesManager'));"
+          if lazy_line not in text:
+              if lazy_anchor not in text:
+                  raise SystemExit('AppSettings lazy import anchor not found')
+              text = text.replace(lazy_anchor, lazy_anchor + "\n" + lazy_line, 1)
+
+          settings_anchor = '''          {/* Settings Tab */}\n          <TabsContent value="settings" className="space-y-6">\n            <AppSettings />\n          </TabsContent>'''
+          apps_block = '''          {/* Apps / APK Releases Tab */}\n          <TabsContent value="apps" className="space-y-6">\n            <AppReleasesManager />\n          </TabsContent>\n\n'''
+          if '<TabsContent value="apps"' not in text:
+              if settings_anchor not in text:
+                  raise SystemExit('Settings tab anchor not found')
+              text = text.replace(settings_anchor, apps_block + settings_anchor, 1)
+          dashboard.write_text(text)
+
+          sidebar = Path('src/components/admin/AdminSidebar.tsx')
+          text = sidebar.read_text()
+          auto_line = '      { title: "Auto Top-Up", titleSo: "Auto Top-Up", value: "auto-topup", icon: Zap, permission: "manage_settings" },'
+          apps_line = '      { title: "Apps", titleSo: "Apps", value: "apps", icon: Smartphone, permission: "manage_settings" },'
+          if apps_line not in text:
+              if auto_line not in text:
+                  raise SystemExit('Auto Top-Up sidebar anchor not found')
+              text = text.replace(auto_line, auto_line + "\n" + apps_line, 1)
+          sidebar.write_text(text)
+          PY
+
+      - name: Commit patch
+        run: |
+          if git diff --quiet; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pages/AdminDashboard.tsx src/components/admin/AdminSidebar.tsx
+          git commit -m "feat: add Apps tab to admin dashboard"
+          git push origin main

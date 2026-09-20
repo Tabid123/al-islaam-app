@@ -1,0 +1,1 @@
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS manual_action_email text; ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS manual_action_type text;

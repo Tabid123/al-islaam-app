@@ -1,0 +1,12 @@
+const noop: any = async () => {};
+export default new Proxy({}, { get: () => noop });
+export const initAdMob = noop;
+export const initializeAdMob = noop;
+export const showBanner = noop;
+export const hideBanner = noop;
+export const showBannerAd = noop;
+export const hideBannerAd = noop;
+export const showInterstitial = noop;
+export const showInterstitialAd = noop;
+export const showRewarded = noop;
+export const showRewardedAd = noop;
