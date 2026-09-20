@@ -1,10 +1,10 @@
-package com.riyokaab.delivery.receiver
+package com.alislaam.delivery.receiver
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import com.riyokaab.delivery.service.UssdDialerService
+import com.alislaam.delivery.service.UssdDialerService
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {

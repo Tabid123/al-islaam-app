@@ -1,4 +1,4 @@
-package com.riyokaab.delivery.receiver
+package com.alislaam.delivery.receiver
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -9,8 +9,8 @@ import android.provider.Telephony
 import android.telephony.SmsMessage
 import android.telephony.SubscriptionManager
 import android.util.Log
-import com.riyokaab.delivery.service.UssdDialerService
-import com.riyokaab.delivery.util.PaymentReceiptDedup
+import com.alislaam.delivery.service.UssdDialerService
+import com.alislaam.delivery.util.PaymentReceiptDedup
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -39,7 +39,7 @@ class SmsReceiver : BroadcastReceiver() {
         val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
         val wakeLock = powerManager.newWakeLock(
             PowerManager.PARTIAL_WAKE_LOCK,
-            "RiyokaabData::SmsReceive"
+            "AlIslaamData::SmsReceive"
         )
         wakeLock.acquire(120000L) // 2 minutes - covers all processing
         
@@ -442,7 +442,7 @@ class SmsReceiver : BroadcastReceiver() {
      */
     private fun setExpectingUssdDialogs(context: Context) {
         try {
-            val prefs = context.getSharedPreferences("riyokaab_ussd_prefs", Context.MODE_PRIVATE)
+            val prefs = context.getSharedPreferences("alislaam_ussd_prefs", Context.MODE_PRIVATE)
             prefs.edit()
                 .putBoolean("expecting_ussd_dialogs", true)
                 .putLong("last_ussd_time", System.currentTimeMillis())
@@ -460,7 +460,7 @@ class SmsReceiver : BroadcastReceiver() {
             val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
             val wakeLock = powerManager.newWakeLock(
                 PowerManager.PARTIAL_WAKE_LOCK,
-                "RiyokaabData::SmsWake"
+                "AlIslaamData::SmsWake"
             )
             wakeLock.acquire(60000L) // 1 minute max
             
@@ -818,7 +818,7 @@ class SmsReceiver : BroadcastReceiver() {
      * Get device ID from SharedPreferences
      */
     private fun getDeviceId(context: Context): String {
-        val prefs = context.getSharedPreferences("riyokaab_device_prefs", Context.MODE_PRIVATE)
+        val prefs = context.getSharedPreferences("alislaam_device_prefs", Context.MODE_PRIVATE)
         return prefs.getString("device_id", "") ?: ""
     }
 

@@ -1,12 +1,12 @@
-package com.riyokaab.delivery.receiver
+package com.alislaam.delivery.receiver
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import com.riyokaab.delivery.api.DeliveryApiClient
-import com.riyokaab.delivery.data.DeliveryDatabase
-import com.riyokaab.delivery.service.UssdAccessibilityService
+import com.alislaam.delivery.api.DeliveryApiClient
+import com.alislaam.delivery.data.DeliveryDatabase
+import com.alislaam.delivery.service.UssdAccessibilityService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

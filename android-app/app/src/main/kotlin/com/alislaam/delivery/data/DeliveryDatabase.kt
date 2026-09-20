@@ -1,4 +1,4 @@
-package com.riyokaab.delivery.data
+package com.alislaam.delivery.data
 
 import android.content.Context
 import androidx.room.*
@@ -55,7 +55,7 @@ abstract class DeliveryDatabase : RoomDatabase() {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     DeliveryDatabase::class.java,
-                    "riyokaab_data_database"
+                    "alislaam_data_database"
                 ).build()
                 INSTANCE = instance
                 instance

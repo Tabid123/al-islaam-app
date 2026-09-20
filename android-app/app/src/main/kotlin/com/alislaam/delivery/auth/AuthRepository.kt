@@ -1,9 +1,9 @@
-package com.riyokaab.delivery.auth
+package com.alislaam.delivery.auth
 
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import com.riyokaab.delivery.api.DeliveryApiClient
+import com.alislaam.delivery.api.DeliveryApiClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -23,7 +23,7 @@ import org.json.JSONObject
 class AuthRepository(context: Context) {
 
     companion object {
-        private const val PREFS_NAME = "riyokaab_auth_secure"
+        private const val PREFS_NAME = "alislaam_auth_secure"
         private const val KEY_ACCESS_TOKEN = "access_token"
         private const val KEY_REFRESH_TOKEN = "refresh_token"
         private const val KEY_USER_ID = "user_id"

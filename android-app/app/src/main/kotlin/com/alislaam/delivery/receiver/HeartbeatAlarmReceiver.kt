@@ -1,4 +1,4 @@
-package com.riyokaab.delivery.receiver
+package com.alislaam.delivery.receiver
 
 import android.app.AlarmManager
 import android.app.PendingIntent
@@ -8,7 +8,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
-import com.riyokaab.delivery.api.DeliveryApiClient
+import com.alislaam.delivery.api.DeliveryApiClient
 import kotlinx.coroutines.*
 
 /**
@@ -20,7 +20,7 @@ class HeartbeatAlarmReceiver : BroadcastReceiver() {
 
     companion object {
         private const val HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000L // 5 minutes
-        private const val ACTION_HEARTBEAT = "com.riyokaab.delivery.HEARTBEAT_PING"
+        private const val ACTION_HEARTBEAT = "com.alislaam.delivery.HEARTBEAT_PING"
 
         /**
          * Schedule the first heartbeat alarm. Call from UssdDialerService.onCreate().
@@ -88,7 +88,7 @@ class HeartbeatAlarmReceiver : BroadcastReceiver() {
         val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
         val wakeLock = powerManager.newWakeLock(
             PowerManager.PARTIAL_WAKE_LOCK,
-            "RiyokaabData::HeartbeatWakeLock"
+            "AlIslaamData::HeartbeatWakeLock"
         )
         wakeLock.acquire(30_000L) // 30 seconds max
 
