@@ -642,3 +642,8 @@ REVOKE ALL ON FUNCTION public.renew_delivery_lease(uuid,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.renew_delivery_lease(uuid,text) TO anon, authenticated, service_role;
 REVOKE ALL ON FUNCTION public.claim_next_delivery(text,text[]) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.claim_next_delivery(text,text[]) TO anon, authenticated, service_role;
+
+-- Security hardening: pin search_path for immutable helpers.
+ALTER FUNCTION public.normalize_provider_text(text) SET search_path TO public;
+ALTER FUNCTION public.riyokaab_profit_amount(numeric,numeric,numeric,boolean) SET search_path TO public;
+ALTER FUNCTION public.riyokaab_is_financial_order(text,text,text) SET search_path TO public;
