@@ -21,7 +21,7 @@ const AiChat = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
-      content: 'Salaan! Waxaan kaa caawin karaa xirmooyinka Riyokaab, qiimaha, shirkadaha, iyo doorashada package kugu habboon.',
+      content: 'Salaan! Waxaan kaa caawin karaa xirmooyinka Al-islaam, qiimaha, shirkadaha, iyo doorashada package kugu habboon.',
     },
   ]);
   const [input, setInput] = useState('');
@@ -70,7 +70,7 @@ const AiChat = () => {
           </div>
           <div>
             <h1 className="font-bold leading-tight">AI Chat</h1>
-            <p className="text-xs text-primary-foreground/80">Riyokaab packages assistant</p>
+            <p className="text-xs text-primary-foreground/80">Al-islaam packages assistant</p>
           </div>
         </div>
       </header>

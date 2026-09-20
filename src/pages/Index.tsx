@@ -5,7 +5,7 @@ import PhoneInput from '@/components/PhoneInput';
 import Footer from '@/components/Footer';
 import { useConnectivity } from '@/contexts/ConnectivityContext';
 import { useOfflineCache } from '@/hooks/useOfflineCache';
-const riyokaabLogoSplash = '/images/riyokaab-splash-logo.png';
+const alIslaamLogoSplash = '/images/al-islaam-splash-logo.png';
 
  // Validate Somali phone format: 9 digits starting with 61, 77, 62, or 68
 const isValidSomaliPhone = (phone: string | null): boolean => {
@@ -167,21 +167,21 @@ const Index = () => {
   // Show splash screen
   if (isChecking) {
     return (
-      <div className="fixed inset-0 bg-[#006f00] flex flex-col items-center justify-center z-50">
+      <div className="fixed inset-0 bg-[#008000] flex flex-col items-center justify-center z-50">
         <img 
-          src={riyokaabLogoSplash} 
-          alt="Riyokaab Data" 
+          src={alIslaamLogoSplash} 
+          alt="Al-islaam Data" 
           className="w-36 h-36 rounded-2xl animate-pulse"
         />
-        <div className="w-10 h-10 mt-10 border-4 border-[#4700c4]/30 border-t-[#4700c4] rounded-full animate-spin" />
+        <div className="w-10 h-10 mt-10 border-4 border-[#000000]/30 border-t-[#000000] rounded-full animate-spin" />
         
         {/* Skeleton loading - muuji kadib 4s splash, inta ping wali socoto */}
         {extendedSplashReached && connectivityChecking && !forceExit && (
           <div className="flex flex-col items-center mt-6">
-            <div className="w-48 h-2 bg-[#4700c4]/20 rounded-full overflow-hidden">
-              <div className="h-full bg-[#4700c4]/70 rounded-full animate-pulse" style={{width: '70%'}} />
+            <div className="w-48 h-2 bg-[#000000]/20 rounded-full overflow-hidden">
+              <div className="h-full bg-[#000000]/70 rounded-full animate-pulse" style={{width: '70%'}} />
             </div>
-            <p className="text-[#4700c4]/70 text-xs mt-2">Xiriirka la hubinayo...</p>
+            <p className="text-[#000000]/70 text-xs mt-2">Xiriirka la hubinayo...</p>
           </div>
         )}
       </div>

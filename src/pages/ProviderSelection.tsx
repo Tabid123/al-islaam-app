@@ -11,7 +11,7 @@ import { BottomNavigation } from '@/components/BottomNavigation';
 import { showBannerAd, hideBannerAd } from '@/services/admob';
 import { logScreenView } from '@/services/firebase';
 import { useConnectivity } from '@/contexts/ConnectivityContext';
-import riyokaabLogo from '@/assets/riyokaab-logo.jpeg';
+import alIslaamLogo from '@/assets/al-islaam-logo.jpg';
 import { useSupportContacts } from '@/hooks/useSupportContacts';
 
 interface Provider {
@@ -120,7 +120,7 @@ const ProviderSelection = () => {
           queryFn: async () => {
             const { data, error } = await supabase.from('providers_config').select('promotional_text').eq('id', p.id).maybeSingle();
             if (error) throw error;
-            return data?.promotional_text || 'Riyokaab Data ka iibso Internet adigoona qof wicin, waqti kasta!';
+            return data?.promotional_text || 'Al-islaam Data ka iibso Internet adigoona qof wicin, waqti kasta!';
           },
           staleTime: 10 * 60 * 1000
         });
@@ -226,7 +226,7 @@ const ProviderSelection = () => {
       >
         <div className="px-4 pt-3 pb-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-extrabold text-white tracking-tight">Riyokaab</h1>
+            <h1 className="text-2xl font-extrabold text-white tracking-tight">Al-islaam</h1>
             <div className="flex items-center gap-2">
               <button 
                 onClick={() => navigate('/scheduled-orders')}

@@ -111,7 +111,7 @@ const AppContent = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Ka bax App-ka?</AlertDialogTitle>
             <AlertDialogDescription>
-              Ma hubtaa inaad rabto inaad ka baxdo Riyokaab Data app-ka?
+              Ma hubtaa inaad rabto inaad ka baxdo Al-islaam Data app-ka?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

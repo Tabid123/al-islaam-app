@@ -60,15 +60,15 @@ const Profile = () => {
 
   const handleShare = async () => {
     const shareData = {
-      title: 'Riyokaab Data',
-      text: 'Soo degso Riyokaab Data App - Internet bundles iibso si fudud!',
-      url: 'https://riyokaabdata.com'
+      title: 'Al-islaam Data',
+      text: 'Soo degso Al-islaam Data App - Internet bundles iibso si fudud!',
+      url: window.location.origin
     };
     try {
       if (navigator.share) {
         await navigator.share(shareData);
       } else {
-        await navigator.clipboard.writeText('https://riyokaabdata.com');
+        await navigator.clipboard.writeText(window.location.origin);
         toast.success('Link waa la copy-gareeye!');
       }
     } catch (err) {}
@@ -92,7 +92,7 @@ const Profile = () => {
     },
     {
       icon: Star,
-      title: 'Qiimey Riyokaab Data App',
+      title: 'Qiimey Al-islaam Data App',
       action: () => window.open('https://play.google.com/store/apps/details?id=app.lovable.5178b6a28d534275a37667022407be64', '_blank')
     },
     {

@@ -51,12 +51,12 @@ const PrivacyPolicy = () => {
               <Shield className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <h2 className="font-semibold text-foreground">Riyokaab Data</h2>
+              <h2 className="font-semibold text-foreground">Al-islaam Data</h2>
               <p className="text-sm text-muted-foreground">Your data is secure</p>
             </div>
           </div>
           <p className="text-muted-foreground leading-relaxed">
-            Riyokaab Data is committed to protecting your privacy and personal data. 
+            Al-islaam Data is committed to protecting your privacy and personal data. 
             This policy explains how we collect, use, and protect your data 
             when you use our app.
           </p>
@@ -84,7 +84,7 @@ const PrivacyPolicy = () => {
           <p className="text-muted-foreground text-sm mb-2">
             If you have questions about this privacy policy
           </p>
-          <p className="text-foreground font-medium">Contact: info@riyokaabdata.com</p>
+          <p className="text-foreground font-medium">Contact Al-islaam customer service</p>
         </div>
 
         {/* Last Updated */}
