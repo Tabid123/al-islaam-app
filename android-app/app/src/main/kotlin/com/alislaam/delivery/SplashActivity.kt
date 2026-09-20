@@ -1,10 +1,10 @@
-package com.riyokaab.delivery
+package com.alislaam.delivery
 
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
-import com.riyokaab.delivery.auth.AuthRepository
+import com.alislaam.delivery.auth.AuthRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

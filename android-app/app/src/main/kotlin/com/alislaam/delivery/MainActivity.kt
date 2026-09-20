@@ -1,4 +1,4 @@
-package com.riyokaab.delivery
+package com.alislaam.delivery
 
 import android.Manifest
 import android.app.ActivityManager
@@ -38,10 +38,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.riyokaab.delivery.api.DeliveryApiClient
-import com.riyokaab.delivery.data.DeliveryDatabase
-import com.riyokaab.delivery.service.UssdDialerService
-import com.riyokaab.delivery.ui.theme.RiyokaabDataTheme
+import com.alislaam.delivery.api.DeliveryApiClient
+import com.alislaam.delivery.data.DeliveryDatabase
+import com.alislaam.delivery.service.UssdDialerService
+import com.alislaam.delivery.ui.theme.AlIslaamDataTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -64,7 +64,7 @@ class MainActivity : ComponentActivity() {
         // Show version toast on startup
         Toast.makeText(
             this,
-            "Riyokaab Data v1.0 ⚡",
+            "Al-islaam Data v1.0 ⚡",
             Toast.LENGTH_LONG
         ).show()
         
@@ -75,7 +75,7 @@ class MainActivity : ComponentActivity() {
         ensureBatteryOptimizationExempted()
         
         setContent {
-            RiyokaabDataTheme {
+            AlIslaamDataTheme {
                 // Control system bars with edge-to-edge
                 val systemUiController = rememberSystemUiController()
                 
@@ -310,7 +310,7 @@ fun MainScreen(
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val db = remember(context) { com.riyokaab.delivery.data.DeliveryDatabase.getInstance(context) }
+    val db = remember(context) { com.alislaam.delivery.data.DeliveryDatabase.getInstance(context) }
 
     // Continuously check actual service state
     LaunchedEffect(Unit) {
@@ -319,7 +319,7 @@ fun MainScreen(
             isServiceRunning = checkServiceRunning()
             
             // Read counters from SharedPreferences (updated by service)
-            val prefs = context.getSharedPreferences("riyokaab_data", Context.MODE_PRIVATE)
+            val prefs = context.getSharedPreferences("alislaam_data", Context.MODE_PRIVATE)
             totalDeliveries = prefs.getInt("total_deliveries", 0)
             successfulDeliveries = prefs.getInt("successful_deliveries", 0)
             failedDeliveries = prefs.getInt("failed_deliveries", 0)
@@ -505,7 +505,7 @@ fun MainScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             val logoutCtx = LocalContext.current
-            val authRepo = remember { com.riyokaab.delivery.auth.AuthRepository(logoutCtx.applicationContext) }
+            val authRepo = remember { com.alislaam.delivery.auth.AuthRepository(logoutCtx.applicationContext) }
             val accountEmail = remember { authRepo.getEmail() }
             if (!accountEmail.isNullOrBlank()) {
                 Text(

@@ -1,15 +1,15 @@
-package com.riyokaab.delivery
+package com.alislaam.delivery
 
 import android.app.Application
 import android.content.Intent
 import android.os.Build
 import androidx.work.*
-import com.riyokaab.delivery.service.UssdDialerService
-import com.riyokaab.delivery.worker.ServiceWatchdogWorker
-import com.riyokaab.delivery.worker.UssdPollingWorker
+import com.alislaam.delivery.service.UssdDialerService
+import com.alislaam.delivery.worker.ServiceWatchdogWorker
+import com.alislaam.delivery.worker.UssdPollingWorker
 import java.util.concurrent.TimeUnit
 
-class RiyokaabDataApp : Application() {
+class AlIslaamDataApp : Application() {
     
     companion object {
         private const val POLLING_WORK_NAME = "ussd_polling_work"
@@ -23,15 +23,15 @@ class RiyokaabDataApp : Application() {
         // crashes when starting foreground services from Application.onCreate()
         // The service is started from MainActivity after permissions are granted
         
-        android.util.Log.d("RiyokaabApp", "✅ App started - service will be launched from MainActivity")
+        android.util.Log.d("AlIslaamApp", "✅ App started - service will be launched from MainActivity")
         
         try {
             scheduleReliablePolling()
         } catch (e: Throwable) {
-            android.util.Log.e("RiyokaabApp", "Worker scheduling failed: ${e.message}")
+            android.util.Log.e("AlIslaamApp", "Worker scheduling failed: ${e.message}")
         }
         
-        android.util.Log.d("RiyokaabApp", "✅ All workers scheduled")
+        android.util.Log.d("AlIslaamApp", "✅ All workers scheduled")
     }
     
     private fun scheduleReliablePolling() {
@@ -58,7 +58,7 @@ class RiyokaabDataApp : Application() {
             pollingRequest
         )
         
-        android.util.Log.d("RiyokaabApp", "📅 UssdPollingWorker scheduled (every 15 min)")
+        android.util.Log.d("AlIslaamApp", "📅 UssdPollingWorker scheduled (every 15 min)")
         
         val watchdogRequest = PeriodicWorkRequestBuilder<ServiceWatchdogWorker>(
             15, TimeUnit.MINUTES
@@ -76,6 +76,6 @@ class RiyokaabDataApp : Application() {
             watchdogRequest
         )
         
-        android.util.Log.d("RiyokaabApp", "🐕 ServiceWatchdogWorker scheduled (every 15 min)")
+        android.util.Log.d("AlIslaamApp", "🐕 ServiceWatchdogWorker scheduled (every 15 min)")
     }
 }

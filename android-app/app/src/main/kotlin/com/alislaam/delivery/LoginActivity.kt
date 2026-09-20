@@ -1,4 +1,4 @@
-package com.riyokaab.delivery
+package com.alislaam.delivery
 
 import android.content.Intent
 import android.os.Bundle
@@ -23,15 +23,15 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.riyokaab.delivery.auth.AuthRepository
-import com.riyokaab.delivery.ui.theme.RiyokaabDataTheme
+import com.alislaam.delivery.auth.AuthRepository
+import com.alislaam.delivery.ui.theme.AlIslaamDataTheme
 import kotlinx.coroutines.launch
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            RiyokaabDataTheme {
+            AlIslaamDataTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = Color(0xFFF5F5F5)

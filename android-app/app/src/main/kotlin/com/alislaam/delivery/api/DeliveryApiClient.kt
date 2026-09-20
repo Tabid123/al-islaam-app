@@ -1,4 +1,4 @@
-package com.riyokaab.delivery.api
+package com.alislaam.delivery.api
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
