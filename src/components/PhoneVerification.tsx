@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { setUserPhone } from '@/services/onesignal';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { ShieldCheck, Phone, ArrowLeft, Gift } from 'lucide-react';
-import alIslaamLogo from '@/assets/al-islaam-logo.svg';
+import alIslaamLogo from '@/assets/al-islaam-logo.png';
 import somaliaFlag from '@/assets/somalia-flag.png';
 import hormuudLogo from '@/assets/providers/hormuud-logo.jpeg';
 import somtelLogo from '@/assets/providers/somtel-logo.jpg';

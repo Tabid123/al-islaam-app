@@ -10,9 +10,9 @@
   "scope": "/",
   "icons": [
     {
-      "src": "/images/al-islaam-logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/images/al-islaam-logo.png",
+      "sizes": "128x128",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ],

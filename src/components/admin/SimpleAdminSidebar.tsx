@@ -21,7 +21,7 @@ import {
   Star, Layers, Zap, ImageIcon, WifiOff, ShieldCheck, FileText,
   Receipt, Moon, Sun, Globe, Banknote, TrendingUp,
 } from 'lucide-react';
-import alIslaamLogo from '@/assets/al-islaam-logo.svg';
+import alIslaamLogo from '@/assets/al-islaam-logo.png';
 import { useAdminPermissions, DETAIL_PERMISSIONS } from '@/hooks/useAdminPermissions';
 
 interface MenuItem {

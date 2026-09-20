@@ -14,7 +14,7 @@ import { AddManualDeliveryDialog } from '@/components/admin/AddManualDeliveryDia
 import { useAdminPermissions } from '@/hooks/useAdminPermissions';
 import { ReversalAlertsHeader } from '@/components/admin/ReversalAlertsHeader';
 import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
-import alIslaamLogo from '@/assets/al-islaam-logo.svg';
+import alIslaamLogo from '@/assets/al-islaam-logo.png';
 import { calculateAlIslaamProfit, hasUssdFlowDelivery, isUssdFlowCode, isNonFinancialOrder } from '@/lib/profit';
 
 interface DashboardStats {

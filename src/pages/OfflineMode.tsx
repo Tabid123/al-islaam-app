@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import alIslaamLogo from '@/assets/al-islaam-logo.svg';
+import alIslaamLogo from '@/assets/al-islaam-logo.png';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Phone, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';

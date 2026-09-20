@@ -11,7 +11,7 @@ import { BottomNavigation } from '@/components/BottomNavigation';
 import { showBannerAd, hideBannerAd } from '@/services/admob';
 import { logScreenView } from '@/services/firebase';
 import { useConnectivity } from '@/contexts/ConnectivityContext';
-import alIslaamLogo from '@/assets/al-islaam-logo.svg';
+import alIslaamLogo from '@/assets/al-islaam-logo.png';
 import { useSupportContacts } from '@/hooks/useSupportContacts';
 
 interface Provider {

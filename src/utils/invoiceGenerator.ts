@@ -56,7 +56,7 @@ export const generateInvoiceImage = async (order: InvoiceData): Promise<Blob> =>
   
   // Load and draw Al-islaam Data logo (right side of header)
   try {
-    const alIslaamLogoModule = await import('@/assets/al-islaam-logo.svg');
+    const alIslaamLogoModule = await import('@/assets/al-islaam-logo.png');
     const alIslaamLogo = await loadLocalImage(alIslaamLogoModule.default);
     const logoWidth = 120;
     const logoHeight = 80;

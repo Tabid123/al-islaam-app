@@ -1,5 +1,5 @@
 import React from 'react';
-import alIslaamLogo from '@/assets/al-islaam-logo.svg';
+import alIslaamLogo from '@/assets/al-islaam-logo.png';
 
 const HeroSection = () => {
   return (
