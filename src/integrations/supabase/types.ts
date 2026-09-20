@@ -2277,6 +2277,40 @@ export type Database = {
         Args: { p_amount: number; p_receipt_id: string; p_sender_phone: string }
         Returns: Json
       }
+      check_referral_code_exists: { Args: { p_code: string }; Returns: boolean }
+      claim_discovery_selection: {
+        Args: { p_device_id: string }
+        Returns: Json
+      }
+      claim_next_bulk_sms: {
+        Args: { p_device_id: string; p_sim_slot?: number }
+        Returns: Json
+      }
+      claim_next_delivery: {
+        Args: { p_device_id: string; p_providers?: string[] }
+        Returns: Json
+      }
+      claim_next_discovery: { Args: { p_device_id: string }; Returns: Json }
+      complete_discovery: {
+        Args: {
+          p_error?: string
+          p_hold?: boolean
+          p_id: string
+          p_items?: Json
+          p_raw_menu: string
+        }
+        Returns: Json
+      }
+      complete_discovery_selection: {
+        Args: { p_id: string; p_response?: string; p_success: boolean }
+        Returns: Json
+      }
+      discovery_delivery_fallback: {
+        Args: { p_discovery_id: string }
+        Returns: undefined
+      }
+      discovery_has_waiting_request: { Args: never; Returns: boolean }
+      discovery_session_lost: { Args: { p_id: string }; Returns: Json }
       get_active_categories: {
         Args: { p_provider_id?: string }
         Returns: {
@@ -2475,9 +2509,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_bulk_sms_counter: {
+        Args: { p_campaign_id: string; p_field: string }
+        Returns: undefined
+      }
       is_admin: { Args: never; Returns: boolean }
       is_phone_blocked: { Args: { p_phone: string }; Returns: boolean }
+      normalize_provider_text: { Args: { t: string }; Returns: string }
       release_discovery_session: { Args: { p_id: string }; Returns: boolean }
+      renew_delivery_lease: {
+        Args: { p_device_id: string; p_queue_id: string }
+        Returns: boolean
+      }
       request_package_discovery: {
         Args: { p_phone: string; p_root_package_id: string }
         Returns: Json
@@ -2485,6 +2528,54 @@ export type Database = {
       retry_failed_order: {
         Args: { p_new_receiver_phone: string; p_order_id: string }
         Returns: boolean
+      }
+      riyokaab_effective_order_cost: {
+        Args: { p_order_cost: number; p_package_id: string }
+        Returns: number
+      }
+      riyokaab_effective_order_cost_v2: {
+        Args: {
+          p_discovery_menu_label: string
+          p_discovery_root_id: string
+          p_order_cost: number
+          p_package_id: string
+          p_selling_price: number
+        }
+        Returns: number
+      }
+      riyokaab_is_financial_order: {
+        Args: {
+          p_delivery_status: string
+          p_payment_source: string
+          p_status: string
+        }
+        Returns: boolean
+      }
+      riyokaab_is_flow_order: {
+        Args: {
+          p_discovery_root_id: string
+          p_order_id: string
+          p_package_id: string
+        }
+        Returns: boolean
+      }
+      riyokaab_profit_amount: {
+        Args: {
+          p_cost: number
+          p_is_flow: boolean
+          p_rate: number
+          p_selling: number
+        }
+        Returns: number
+      }
+      save_offline_registration: {
+        Args: {
+          p_provider_id: string
+          p_provider_name: string
+          p_receiver: string
+          p_sender: string
+        }
+        Returns: Json
       }
       set_bank_credential: {
         Args: { p_password: string; p_username: string }
@@ -2494,7 +2585,9 @@ export type Database = {
         Args: { p_phone: string }
         Returns: undefined
       }
+      ussd_duration_key: { Args: { p_label: string }; Returns: string }
       ussd_normalize_label: { Args: { _label: string }; Returns: string }
+      ussd_strip_price_prefix: { Args: { p_label: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "super_admin" | "moderator" | "user"
