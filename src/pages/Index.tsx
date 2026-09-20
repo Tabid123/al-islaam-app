@@ -5,7 +5,7 @@ import PhoneInput from '@/components/PhoneInput';
 import Footer from '@/components/Footer';
 import { useConnectivity } from '@/contexts/ConnectivityContext';
 import { useOfflineCache } from '@/hooks/useOfflineCache';
-const alIslaamLogoSplash = '/images/al-islaam-splash-logo.png';
+const alIslaamLogoSplash = '/images/al-islaam-logo.svg';
 
  // Validate Somali phone format: 9 digits starting with 61, 77, 62, or 68
 const isValidSomaliPhone = (phone: string | null): boolean => {
