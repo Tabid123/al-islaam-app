@@ -5,4 +5,4 @@
 
 - [~] (postponed) Update secrets SOMLINK_PASSWORD and SOMLINK_WALLET_PHONE (secure form)
 - [~] (postponed) Link GitHub API connection "Saabir's GitHub API"
-- [~] (postponed) Review uploaded DB schema (CREATE_TABLE_public.user_roles_pasted.sql) per user request "scheme kaan isticmaal"
+- [x] Applied uploaded DB schema: 48 tables + app_role enum, RLS/grants, and the app's RPC functions
