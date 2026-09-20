@@ -56,7 +56,7 @@ export const generateInvoiceImage = async (order: InvoiceData): Promise<Blob> =>
   
   // Load and draw Riyokaab Data logo (right side of header)
   try {
-    const riyokaabLogoModule = await import('@/assets/riyokaab-logo.jpeg');
+    const riyokaabLogoModule = await import('@/assets/al-islaam-logo.svg');
     const riyokaabLogo = await loadLocalImage(riyokaabLogoModule.default);
     const logoWidth = 120;
     const logoHeight = 80;

@@ -23,7 +23,7 @@ import { SimpleAdminSidebar } from '@/components/admin/SimpleAdminSidebar';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { ArrowLeft, Menu, Globe, Moon, Sun, Loader2 } from 'lucide-react';
-import riyokaabLogo from '@/assets/riyokaab-logo.jpeg';
+import riyokaabLogo from '@/assets/al-islaam-logo.svg';
 import { useAdminPermissions, DETAIL_PERMISSIONS } from '@/hooks/useAdminPermissions';
 
 // Lazy-loaded custom views (code-split per view)
