@@ -2244,6 +2244,162 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_create_referral_code: { Args: { p_phone: string }; Returns: string }
+      admin_delete_referral_code: {
+        Args: { p_phone: string }
+        Returns: boolean
+      }
+      admin_referral_overview: {
+        Args: never
+        Returns: {
+          code: string
+          created_at: string
+          earnings: number
+          phone: string
+          points: number
+          total_referrals: number
+        }[]
+      }
+      admin_remove_admin: { Args: { p_user_id: string }; Returns: boolean }
+      admin_reset_referral_points: {
+        Args: { p_phone: string }
+        Returns: boolean
+      }
+      apply_referral_code: {
+        Args: { p_code: string; p_new_phone: string }
+        Returns: Json
+      }
+      cancel_scheduled_order: {
+        Args: { customer_phone_number: string; p_order_id: string }
+        Returns: boolean
+      }
+      check_fraud_rules: {
+        Args: { p_amount: number; p_receipt_id: string; p_sender_phone: string }
+        Returns: Json
+      }
+      get_active_categories: {
+        Args: { p_provider_id?: string }
+        Returns: {
+          category_image: string
+          category_name: string
+          display_order: number
+          id: string
+          is_active: boolean
+          provider_id: string
+        }[]
+      }
+      get_active_payment_providers: {
+        Args: never
+        Returns: {
+          commission_rate: number
+          display_order: number
+          id: string
+          is_active: boolean
+          payment_number: string
+          prefix_code: string
+          provider_logo: string
+          provider_name: string
+          ussd_code_template: string
+        }[]
+      }
+      get_active_providers: {
+        Args: never
+        Returns: {
+          display_order: number
+          evoucher_rate: number
+          id: string
+          is_active: boolean
+          promotional_text: string
+          provider_logo: string
+          provider_name: string
+        }[]
+      }
+      get_admin_analytics_summary: { Args: never; Returns: Json }
+      get_admin_date_range_breakdown: {
+        Args: { p_end_date?: string; p_start_date?: string }
+        Returns: {
+          day: string
+          order_count: number
+          profit: number
+          revenue: number
+        }[]
+      }
+      get_admin_provider_daily_stats: {
+        Args: { p_date?: string }
+        Returns: {
+          day: string
+          order_count: number
+          profit: number
+          provider_id: string
+          provider_name: string
+          revenue: number
+        }[]
+      }
+      get_admin_reports: {
+        Args: { p_end?: string; p_start?: string }
+        Returns: Json
+      }
+      get_admin_transactions_paginated: {
+        Args: {
+          p_page?: number
+          p_page_size?: number
+          p_period?: string
+          p_provider_id?: string
+          p_search?: string
+          p_status?: string
+        }
+        Returns: {
+          cost_price: number
+          created_at: string
+          customer_phone: string
+          data_amount: string
+          delivery_status: string
+          id: string
+          package_name: string
+          provider_id: string
+          receiver_phone: string
+          selling_price: number
+          status: string
+          total_count: number
+          tx_id: string
+        }[]
+      }
+      get_admin_transactions_summary: {
+        Args: { p_period?: string; p_provider_id?: string }
+        Returns: Json
+      }
+      get_customer_order_history: {
+        Args: { customer_phone_number: string }
+        Returns: {
+          created_at: string
+          data_amount: string
+          delivered_at: string
+          delivery_status: string
+          id: string
+          package_id: string
+          package_name: string
+          provider_id: string
+          receiver_phone: string
+          scheduled_for: string
+          selling_price: number
+          status: string
+          tx_id: string
+        }[]
+      }
+      get_customer_scheduled_orders: {
+        Args: { customer_phone_number: string }
+        Returns: {
+          created_at: string
+          data_amount: string
+          id: string
+          package_name: string
+          receiver_phone: string
+          scheduled_for: string
+          selling_price: number
+          status: string
+        }[]
+      }
+      get_discovery_queue_status: { Args: { p_id: string }; Returns: Json }
       get_featured_packages: {
         Args: never
         Returns: {
@@ -2272,6 +2428,46 @@ export type Database = {
           selling_price: number
         }[]
       }
+      get_my_admin_context: { Args: never; Returns: Json }
+      get_my_referral_code: { Args: { p_phone: string }; Returns: string }
+      get_package_discovery: { Args: { p_id: string }; Returns: Json }
+      get_public_packages: {
+        Args: { p_category_id?: string; p_provider_id?: string }
+        Returns: {
+          category_id: string
+          connection_type_label: string
+          data_amount: string
+          display_order: number
+          id: string
+          is_active: boolean
+          is_discovery_root: boolean
+          is_ussd_only: boolean
+          package_name: string
+          phone_prefix: string
+          provider_id: string
+          selling_price: number
+          validity_days: string
+        }[]
+      }
+      get_public_packages_safe: {
+        Args: { p_category_id?: string; p_provider_id?: string }
+        Returns: {
+          category_id: string
+          connection_type_label: string
+          data_amount: string
+          display_order: number
+          id: string
+          is_active: boolean
+          is_discovery_root: boolean
+          is_ussd_only: boolean
+          package_name: string
+          phone_prefix: string
+          provider_id: string
+          selling_price: number
+          validity_days: string
+        }[]
+      }
+      get_referral_summary: { Args: { p_phone: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2280,6 +2476,24 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_phone_blocked: { Args: { p_phone: string }; Returns: boolean }
+      release_discovery_session: { Args: { p_id: string }; Returns: boolean }
+      request_package_discovery: {
+        Args: { p_phone: string; p_root_package_id: string }
+        Returns: Json
+      }
+      retry_failed_order: {
+        Args: { p_new_receiver_phone: string; p_order_id: string }
+        Returns: boolean
+      }
+      set_bank_credential: {
+        Args: { p_password: string; p_username: string }
+        Returns: boolean
+      }
+      upsert_verified_phone_login: {
+        Args: { p_phone: string }
+        Returns: undefined
+      }
       ussd_normalize_label: { Args: { _label: string }; Returns: string }
     }
     Enums: {
