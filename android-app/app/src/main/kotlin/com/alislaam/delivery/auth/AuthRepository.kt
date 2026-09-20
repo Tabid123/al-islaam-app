@@ -30,8 +30,8 @@ class AuthRepository(context: Context) {
         private const val KEY_EMAIL = "email"
         private const val KEY_EXPIRES_AT = "expires_at"
 
-        private const val AUTH_URL = "https://ruulpufuvxcdbslegcvc.supabase.co/auth/v1"
-        private const val REST_URL = "https://ruulpufuvxcdbslegcvc.supabase.co/rest/v1"
+        private const val AUTH_URL = "https://iwdtpouuxbzqhcqhujfv.supabase.co/auth/v1"
+        private const val REST_URL = "https://iwdtpouuxbzqhcqhujfv.supabase.co/rest/v1"
 
         private val JSON = "application/json; charset=utf-8".toMediaType()
     }

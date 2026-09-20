@@ -54,7 +54,7 @@ class UssdDialerService : Service() {
         private const val NIGHT_POLL_INTERVAL_MS = 20000L   // 00:00-05:00
         private const val BUSY_POLL_INTERVAL_MS = 3000L     // when orders found
         private const val JITTER_MAX_MS = 2000L             // 1-2s random jitter
-        private const val API_URL = "https://ruulpufuvxcdbslegcvc.supabase.co/functions/v1/process-payment-receipt"
+        private const val API_URL = "https://iwdtpouuxbzqhcqhujfv.supabase.co/functions/v1/process-payment-receipt"
     }
     
     // Reuse shared connection-pooled OkHttpClient from DeliveryApiClient (saves ~35% data)
