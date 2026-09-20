@@ -3,6 +3,6 @@
 - [x] Auto-fail trigger: delivery_queue response matching provider_response_messages marks order failed (tested: queue + order both failed, rolled back)
 - [x] Seed/upsert exact provider failure messages (Amtel, Somtel, Hormuud, Somnet)
 
-- [ ] Update secrets SOMLINK_PASSWORD and SOMLINK_WALLET_PHONE (secure form)
-- [ ] Link GitHub API connection "Saabir's GitHub API"
-- [ ] Review uploaded DB schema (CREATE_TABLE_public.user_roles_pasted.sql) per user request "scheme kaan isticmaal"
+- [~] (postponed) Update secrets SOMLINK_PASSWORD and SOMLINK_WALLET_PHONE (secure form)
+- [~] (postponed) Link GitHub API connection "Saabir's GitHub API"
+- [~] (postponed) Review uploaded DB schema (CREATE_TABLE_public.user_roles_pasted.sql) per user request "scheme kaan isticmaal"
