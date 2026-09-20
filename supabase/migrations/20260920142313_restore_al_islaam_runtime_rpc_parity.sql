@@ -1,4 +1,4 @@
--- Restore Riyokaab runtime RPC parity required by Al-islaam.
+-- Restore Al-islaam runtime RPC parity required by Al-islaam.
 -- Generated from the verified live Al-islaam database after parity restoration.
 
 CREATE OR REPLACE FUNCTION public.check_referral_code_exists(p_code text)
@@ -459,7 +459,7 @@ BEGIN
 END;
 $function$;
 
-CREATE OR REPLACE FUNCTION public.riyokaab_effective_order_cost(p_order_cost numeric, p_package_id uuid)
+CREATE OR REPLACE FUNCTION public.al_islaam_effective_order_cost(p_order_cost numeric, p_package_id uuid)
  RETURNS numeric
  LANGUAGE sql
  STABLE SECURITY DEFINER
@@ -474,7 +474,7 @@ AS $function$
   END;
 $function$;
 
-CREATE OR REPLACE FUNCTION public.riyokaab_effective_order_cost_v2(p_order_cost numeric, p_package_id uuid, p_discovery_root_id uuid, p_discovery_menu_label text, p_selling_price numeric)
+CREATE OR REPLACE FUNCTION public.al_islaam_effective_order_cost_v2(p_order_cost numeric, p_package_id uuid, p_discovery_root_id uuid, p_discovery_menu_label text, p_selling_price numeric)
  RETURNS numeric
  LANGUAGE sql
  STABLE SECURITY DEFINER
@@ -515,7 +515,7 @@ AS $function$
   END;
 $function$;
 
-CREATE OR REPLACE FUNCTION public.riyokaab_is_financial_order(p_status text, p_delivery_status text, p_payment_source text)
+CREATE OR REPLACE FUNCTION public.al_islaam_is_financial_order(p_status text, p_delivery_status text, p_payment_source text)
  RETURNS boolean
  LANGUAGE sql
  IMMUTABLE
@@ -530,7 +530,7 @@ AS $function$
   );
 $function$;
 
-CREATE OR REPLACE FUNCTION public.riyokaab_is_flow_order(p_order_id uuid, p_package_id uuid, p_discovery_root_id uuid)
+CREATE OR REPLACE FUNCTION public.al_islaam_is_flow_order(p_order_id uuid, p_package_id uuid, p_discovery_root_id uuid)
  RETURNS boolean
  LANGUAGE sql
  STABLE SECURITY DEFINER
@@ -557,7 +557,7 @@ AS $function$
     );
 $function$;
 
-CREATE OR REPLACE FUNCTION public.riyokaab_profit_amount(p_selling numeric, p_cost numeric, p_rate numeric, p_is_flow boolean)
+CREATE OR REPLACE FUNCTION public.al_islaam_profit_amount(p_selling numeric, p_cost numeric, p_rate numeric, p_is_flow boolean)
  RETURNS numeric
  LANGUAGE sql
  IMMUTABLE
@@ -645,5 +645,5 @@ GRANT EXECUTE ON FUNCTION public.claim_next_delivery(text,text[]) TO anon, authe
 
 -- Security hardening: pin search_path for immutable helpers.
 ALTER FUNCTION public.normalize_provider_text(text) SET search_path TO public;
-ALTER FUNCTION public.riyokaab_profit_amount(numeric,numeric,numeric,boolean) SET search_path TO public;
-ALTER FUNCTION public.riyokaab_is_financial_order(text,text,text) SET search_path TO public;
+ALTER FUNCTION public.al_islaam_profit_amount(numeric,numeric,numeric,boolean) SET search_path TO public;
+ALTER FUNCTION public.al_islaam_is_financial_order(text,text,text) SET search_path TO public;

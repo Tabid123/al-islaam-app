@@ -15,11 +15,11 @@ export const hasUssdFlowDelivery = (
 };
 
 /**
- * Riyokaab profit parity with the Iftin USSD-flow rule:
+ * Al-islaam profit parity with the Iftin USSD-flow rule:
  * - interactive USSD flows (*870*, *866*, *101*, *212*) => selling - cost
- * - all other orders keep Riyokaab's existing e-voucher calculation
+ * - all other orders keep Al-islaam's existing e-voucher calculation
  */
-export const calculateRiyokaabProfit = (
+export const calculateAlIslaamProfit = (
   sellingPrice: number,
   costPrice: number,
   evoucherRate = 0,

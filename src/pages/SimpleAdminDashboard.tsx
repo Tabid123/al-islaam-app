@@ -15,7 +15,7 @@ import { useAdminPermissions } from '@/hooks/useAdminPermissions';
 import { ReversalAlertsHeader } from '@/components/admin/ReversalAlertsHeader';
 import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
 import alIslaamLogo from '@/assets/al-islaam-logo.svg';
-import { calculateRiyokaabProfit, hasUssdFlowDelivery, isUssdFlowCode, isNonFinancialOrder } from '@/lib/profit';
+import { calculateAlIslaamProfit, hasUssdFlowDelivery, isUssdFlowCode, isNonFinancialOrder } from '@/lib/profit';
 
 interface DashboardStats {
   todayOrderCount: number;
@@ -257,7 +257,7 @@ const SimpleAdminDashboard = () => {
         todayCost = financialOrders.reduce((s, o) => s + effectiveCost(o), 0);
         todayProfit = financialOrders.reduce((s, o) => {
           const rate = Number(providerRates.find(p => p.id === o.provider_id)?.evoucher_rate || 0);
-          return s + calculateRiyokaabProfit(Number(o.selling_price || 0), effectiveCost(o), rate, isFlowOrder(o));
+          return s + calculateAlIslaamProfit(Number(o.selling_price || 0), effectiveCost(o), rate, isFlowOrder(o));
         }, 0);
       } else {
         // Production RPC is the source of truth for today/week/month/year.
@@ -357,7 +357,7 @@ const SimpleAdminDashboard = () => {
           const pkg = o.package_id ? packageById.get(o.package_id) : undefined;
           const flow = Boolean(o.discovery_root_id) || Boolean(pkg?.is_discovery_root) ||
             hasUssdFlowDelivery(orderDeliveries) || isUssdFlowCode(pkg?.ussd_code);
-          return s + calculateRiyokaabProfit(Number(o.selling_price || 0), effectiveCost(o), rate, flow);
+          return s + calculateAlIslaamProfit(Number(o.selling_price || 0), effectiveCost(o), rate, flow);
         }, 0);
 
         return {

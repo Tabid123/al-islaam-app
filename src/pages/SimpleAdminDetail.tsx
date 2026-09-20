@@ -23,7 +23,7 @@ import { SimpleAdminSidebar } from '@/components/admin/SimpleAdminSidebar';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { ArrowLeft, Menu, Globe, Moon, Sun, Loader2 } from 'lucide-react';
-import riyokaabLogo from '@/assets/al-islaam-logo.svg';
+import alIslaamLogo from '@/assets/al-islaam-logo.svg';
 import { useAdminPermissions, DETAIL_PERMISSIONS } from '@/hooks/useAdminPermissions';
 
 // Lazy-loaded custom views (code-split per view)
@@ -234,7 +234,7 @@ const SimpleAdminDetail = () => {
                 <ArrowLeft className="h-5 w-5" />
               </button>
               <div className="flex items-center gap-2">
-                <img src={riyokaabLogo} alt="Logo" className="w-7 h-7 rounded-lg" />
+                <img src={alIslaamLogo} alt="Logo" className="w-7 h-7 rounded-lg" />
                 <h1 className="text-lg font-bold">{title}</h1>
               </div>
               <div className="w-8" />
@@ -258,7 +258,7 @@ const SimpleAdminDetail = () => {
               <button onClick={() => setLanguage(isSo ? 'en' : 'so')} className="flex items-center gap-1 px-2 py-1.5 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[11px] font-medium">
                 <Globe className="h-3 w-3" />{isSo ? '🇬🇧 EN' : '🇸🇴 SO'}
               </button>
-              <span className="text-[10px] text-gray-400">Riyokaab Data v1.0</span>
+              <span className="text-[10px] text-gray-400">Al-islaam Data v1.0</span>
               <button onClick={toggleTheme} className="flex items-center gap-1 px-2 py-1.5 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[11px] font-medium">
                 {theme === 'dark' ? <Sun className="h-3 w-3 text-yellow-500" /> : <Moon className="h-3 w-3 text-blue-500" />}
                 {theme === 'dark' ? 'Light' : 'Dark'}

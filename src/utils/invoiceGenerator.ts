@@ -54,15 +54,15 @@ export const generateInvoiceImage = async (order: InvoiceData): Promise<Blob> =>
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 800, 150);
   
-  // Load and draw Riyokaab Data logo (right side of header)
+  // Load and draw Al-islaam Data logo (right side of header)
   try {
-    const riyokaabLogoModule = await import('@/assets/al-islaam-logo.svg');
-    const riyokaabLogo = await loadLocalImage(riyokaabLogoModule.default);
+    const alIslaamLogoModule = await import('@/assets/al-islaam-logo.svg');
+    const alIslaamLogo = await loadLocalImage(alIslaamLogoModule.default);
     const logoWidth = 120;
     const logoHeight = 80;
-    ctx.drawImage(riyokaabLogo, 640, 35, logoWidth, logoHeight);
+    ctx.drawImage(alIslaamLogo, 640, 35, logoWidth, logoHeight);
   } catch (error) {
-    console.error('Error loading Riyokaab logo:', error);
+    console.error('Error loading Al-islaam logo:', error);
   }
   
   // Title (left side)
@@ -194,7 +194,7 @@ export const generateInvoiceImage = async (order: InvoiceData): Promise<Blob> =>
   ctx.fillText('Mahadsanid-Soo dhawow', 400, yPos);
   ctx.font = 'bold 20px Arial';
   ctx.fillStyle = '#3b82f6';
-  ctx.fillText('Riyokaab Data - Waqti kasta, Meel kasta', 400, yPos + 35);
+  ctx.fillText('Al-islaam Data - Waqti kasta, Meel kasta', 400, yPos + 35);
   
   // Convert to blob
   return new Promise((resolve, reject) => {

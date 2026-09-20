@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { setUserPhone } from '@/services/onesignal';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { ShieldCheck, Phone, ArrowLeft, Gift } from 'lucide-react';
-import riyokaabLogo from '@/assets/al-islaam-logo.svg';
+import alIslaamLogo from '@/assets/al-islaam-logo.svg';
 import somaliaFlag from '@/assets/somalia-flag.png';
 import hormuudLogo from '@/assets/providers/hormuud-logo.jpeg';
 import somtelLogo from '@/assets/providers/somtel-logo.jpg';
@@ -181,9 +181,9 @@ const PhoneVerification = ({ isOpen, onClose, onSuccess, paymentProvider, packag
           /* ───────── PHONE INPUT STEP ───────── */
           <div className="flex flex-col items-center px-5 py-5">
             <div className="w-16 h-16 rounded-xl overflow-hidden shadow-md mb-1.5 border border-primary/20">
-              <img src={riyokaabLogo} alt="Riyokaab Data" className="w-full h-full object-cover" />
+              <img src={alIslaamLogo} alt="Al-islaam Data" className="w-full h-full object-cover" />
             </div>
-            <h1 className="text-base font-black text-foreground leading-tight">RIYOKAAB</h1>
+            <h1 className="text-base font-black text-foreground leading-tight">AL-ISLAAM</h1>
             <p className="text-[10px] font-bold tracking-[0.2em] text-accent mb-1">D A T A</p>
             <div className="flex items-center gap-2 mb-3">
               <div className="w-6 h-px bg-border" />
@@ -273,9 +273,9 @@ const PhoneVerification = ({ isOpen, onClose, onSuccess, paymentProvider, packag
           /* ───────── VERIFICATION STEP ───────── */
           <div className="flex flex-col items-center px-5 py-4">
             <div className="w-12 h-12 rounded-lg overflow-hidden shadow-md mb-1 border border-primary/20">
-              <img src={riyokaabLogo} alt="Riyokaab Data" className="w-full h-full object-cover" />
+              <img src={alIslaamLogo} alt="Al-islaam Data" className="w-full h-full object-cover" />
             </div>
-            <h1 className="text-sm font-black text-foreground leading-tight">RIYOKAAB</h1>
+            <h1 className="text-sm font-black text-foreground leading-tight">AL-ISLAAM</h1>
             <p className="text-[8px] font-bold tracking-[0.2em] text-accent mb-2">D A T A</p>
 
             <div className="w-full rounded-xl border border-border bg-card p-3 mb-2.5">

@@ -2265,6 +2265,45 @@ export type Database = {
         Args: { p_phone: string }
         Returns: boolean
       }
+      al_islaam_effective_order_cost: {
+        Args: { p_order_cost: number; p_package_id: string }
+        Returns: number
+      }
+      al_islaam_effective_order_cost_v2: {
+        Args: {
+          p_discovery_menu_label: string
+          p_discovery_root_id: string
+          p_order_cost: number
+          p_package_id: string
+          p_selling_price: number
+        }
+        Returns: number
+      }
+      al_islaam_is_financial_order: {
+        Args: {
+          p_delivery_status: string
+          p_payment_source: string
+          p_status: string
+        }
+        Returns: boolean
+      }
+      al_islaam_is_flow_order: {
+        Args: {
+          p_discovery_root_id: string
+          p_order_id: string
+          p_package_id: string
+        }
+        Returns: boolean
+      }
+      al_islaam_profit_amount: {
+        Args: {
+          p_cost: number
+          p_is_flow: boolean
+          p_rate: number
+          p_selling: number
+        }
+        Returns: number
+      }
       apply_referral_code: {
         Args: { p_code: string; p_new_phone: string }
         Returns: Json
@@ -2528,45 +2567,6 @@ export type Database = {
       retry_failed_order: {
         Args: { p_new_receiver_phone: string; p_order_id: string }
         Returns: boolean
-      }
-      riyokaab_effective_order_cost: {
-        Args: { p_order_cost: number; p_package_id: string }
-        Returns: number
-      }
-      riyokaab_effective_order_cost_v2: {
-        Args: {
-          p_discovery_menu_label: string
-          p_discovery_root_id: string
-          p_order_cost: number
-          p_package_id: string
-          p_selling_price: number
-        }
-        Returns: number
-      }
-      riyokaab_is_financial_order: {
-        Args: {
-          p_delivery_status: string
-          p_payment_source: string
-          p_status: string
-        }
-        Returns: boolean
-      }
-      riyokaab_is_flow_order: {
-        Args: {
-          p_discovery_root_id: string
-          p_order_id: string
-          p_package_id: string
-        }
-        Returns: boolean
-      }
-      riyokaab_profit_amount: {
-        Args: {
-          p_cost: number
-          p_is_flow: boolean
-          p_rate: number
-          p_selling: number
-        }
-        Returns: number
       }
       save_offline_registration: {
         Args: {

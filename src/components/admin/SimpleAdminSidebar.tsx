@@ -21,7 +21,7 @@ import {
   Star, Layers, Zap, ImageIcon, WifiOff, ShieldCheck, FileText,
   Receipt, Moon, Sun, Globe, Banknote, TrendingUp,
 } from 'lucide-react';
-import riyokaabLogo from '@/assets/al-islaam-logo.svg';
+import alIslaamLogo from '@/assets/al-islaam-logo.svg';
 import { useAdminPermissions, DETAIL_PERMISSIONS } from '@/hooks/useAdminPermissions';
 
 interface MenuItem {
@@ -162,9 +162,9 @@ export function SimpleAdminSidebar() {
     <Sidebar collapsible="offcanvas" className="bg-gray-900 dark:bg-gray-950 border-none">
       <SidebarHeader className="bg-gray-900 dark:bg-gray-950 border-b border-gray-700 p-4">
         <div className="flex items-center gap-3">
-          <img src={riyokaabLogo} alt="Logo" className="w-12 h-12 rounded-full border-2 border-blue-400" />
+          <img src={alIslaamLogo} alt="Logo" className="w-12 h-12 rounded-full border-2 border-blue-400" />
           <div>
-            <div className="text-white font-semibold text-base">Riyokaab Data</div>
+            <div className="text-white font-semibold text-base">Al-islaam Data</div>
             <div className="flex items-center gap-1 text-xs text-blue-400">
               <span className="w-2 h-2 bg-green-400 rounded-full inline-block" />
               Owner

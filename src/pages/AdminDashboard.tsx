@@ -59,7 +59,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn, formatPrice } from '@/lib/utils';
-import { calculateRiyokaabProfit, isUssdFlowCode } from '@/lib/profit';
+import { calculateAlIslaamProfit, isUssdFlowCode } from '@/lib/profit';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -1530,7 +1530,7 @@ const AdminDashboard = () => {
 
   const calculatePackageProfit = (pkg: DataPackage): number => {
     const rate = providers.find(provider => provider.id === pkg.provider_id)?.evoucher_rate || 0;
-    return calculateRiyokaabProfit(pkg.selling_price || 0, pkg.cost_price || 0, rate, packageUsesUssdFlow(pkg));
+    return calculateAlIslaamProfit(pkg.selling_price || 0, pkg.cost_price || 0, rate, packageUsesUssdFlow(pkg));
   };
 
   const addPackage = async () => {
