@@ -71,6 +71,8 @@ class DeliveryApiClient {
             val batteryQuery = if (batteryLevel >= 0) "&battery=$batteryLevel&charging=$isCharging" else ""
             val request = Request.Builder()
                 .url("$baseUrl/activate-package/pending?deviceId=$deviceId$batteryQuery")
+                .addHeader("apikey", anonKey)
+                .addHeader("Authorization", "Bearer $anonKey")
                 .get()
                 .build()
             
@@ -124,6 +126,8 @@ class DeliveryApiClient {
             
             val request = Request.Builder()
                 .url("$baseUrl/activate-package/status")
+                .addHeader("apikey", anonKey)
+                .addHeader("Authorization", "Bearer $anonKey")
                 .post(json.toString().toRequestBody(JSON_MEDIA_TYPE))
                 .build()
             
@@ -148,6 +152,8 @@ class DeliveryApiClient {
             }
             val request = Request.Builder()
                 .url("$baseUrl/activate-package/dispatch")
+                .addHeader("apikey", anonKey)
+                .addHeader("Authorization", "Bearer $anonKey")
                 .post(json.toString().toRequestBody(JSON_MEDIA_TYPE))
                 .build()
             sharedHttpClient.newCall(request).execute().use { response ->
@@ -205,6 +211,8 @@ class DeliveryApiClient {
             
             val request = Request.Builder()
                 .url("$baseUrl/activate-package/ping")
+                .addHeader("apikey", anonKey)
+                .addHeader("Authorization", "Bearer $anonKey")
                 .post(json.toString().toRequestBody(JSON_MEDIA_TYPE))
                 .build()
             
@@ -232,6 +240,8 @@ class DeliveryApiClient {
             
             val request = Request.Builder()
                 .url("$baseUrl/register-device")
+                .addHeader("apikey", anonKey)
+                .addHeader("Authorization", "Bearer $anonKey")
                 .post(json.toString().toRequestBody(JSON_MEDIA_TYPE))
                 .build()
             
@@ -258,6 +268,8 @@ class DeliveryApiClient {
         try {
             val request = Request.Builder()
                 .url("$baseUrl/activate-package/otp-pending?deviceId=$deviceId")
+                .addHeader("apikey", anonKey)
+                .addHeader("Authorization", "Bearer $anonKey")
                 .get()
                 .build()
             
@@ -306,6 +318,8 @@ class DeliveryApiClient {
             
             val request = Request.Builder()
                 .url("$baseUrl/activate-package/otp-status")
+                .addHeader("apikey", anonKey)
+                .addHeader("Authorization", "Bearer $anonKey")
                 .post(json.toString().toRequestBody(JSON_MEDIA_TYPE))
                 .build()
             
@@ -324,6 +338,8 @@ class DeliveryApiClient {
         try {
             val request = Request.Builder()
                 .url("$baseUrl/activate-package?action=device-config&deviceId=$deviceId")
+                .addHeader("apikey", anonKey)
+                .addHeader("Authorization", "Bearer $anonKey")
                 .get()
                 .build()
             
