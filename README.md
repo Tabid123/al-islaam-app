@@ -1,6 +1,6 @@
 # Al-islaam App
 
-https://github.com/Tabid123/riyokaabapp2.git
+https://github.com/Tabid123/al-islaam-app.git
 
 This project was built with [Lovable](https://lovable.dev).
 

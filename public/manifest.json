@@ -1,7 +1,7 @@
 {
-  "name": "Riyokaab Data - Iibso Internet Offline",
-  "short_name": "Riyokaab Data",
-  "description": "Riyokaab Data ka iibso Internet adigoona qof wicin, waqti kasta, xitaa offline!",
+  "name": "Al-islaam Data - Iibso Internet Offline",
+  "short_name": "Al-islaam Data",
+  "description": "Al-islaam Data ka iibso Internet adigoona qof wicin, waqti kasta, xitaa offline!",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#006f00",

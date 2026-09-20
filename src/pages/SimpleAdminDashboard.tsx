@@ -14,8 +14,8 @@ import { AddManualDeliveryDialog } from '@/components/admin/AddManualDeliveryDia
 import { useAdminPermissions } from '@/hooks/useAdminPermissions';
 import { ReversalAlertsHeader } from '@/components/admin/ReversalAlertsHeader';
 import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
-import riyokaabLogo from '@/assets/riyokaab-logo.jpeg';
-import { calculateRiyokaabProfit, hasUssdFlowDelivery, isUssdFlowCode, isNonFinancialOrder } from '@/lib/profit';
+import alIslaamLogo from '@/assets/al-islaam-logo.jpg';
+import { calculateAl-islaamProfit, hasUssdFlowDelivery, isUssdFlowCode, isNonFinancialOrder } from '@/lib/profit';
 
 interface DashboardStats {
   todayOrderCount: number;
@@ -257,7 +257,7 @@ const SimpleAdminDashboard = () => {
         todayCost = financialOrders.reduce((s, o) => s + effectiveCost(o), 0);
         todayProfit = financialOrders.reduce((s, o) => {
           const rate = Number(providerRates.find(p => p.id === o.provider_id)?.evoucher_rate || 0);
-          return s + calculateRiyokaabProfit(Number(o.selling_price || 0), effectiveCost(o), rate, isFlowOrder(o));
+          return s + calculateAl-islaamProfit(Number(o.selling_price || 0), effectiveCost(o), rate, isFlowOrder(o));
         }, 0);
       } else {
         // Production RPC is the source of truth for today/week/month/year.
@@ -357,7 +357,7 @@ const SimpleAdminDashboard = () => {
           const pkg = o.package_id ? packageById.get(o.package_id) : undefined;
           const flow = Boolean(o.discovery_root_id) || Boolean(pkg?.is_discovery_root) ||
             hasUssdFlowDelivery(orderDeliveries) || isUssdFlowCode(pkg?.ussd_code);
-          return s + calculateRiyokaabProfit(Number(o.selling_price || 0), effectiveCost(o), rate, flow);
+          return s + calculateAl-islaamProfit(Number(o.selling_price || 0), effectiveCost(o), rate, flow);
         }, 0);
 
         return {
@@ -444,8 +444,8 @@ const SimpleAdminDashboard = () => {
           <header className="bg-gradient-to-r from-green-700 to-green-500 text-white">
             <div className="flex items-center justify-center py-3 px-4">
               <div className="flex items-center gap-2">
-                <img src={riyokaabLogo} alt="Logo" className="w-8 h-8 rounded-lg" />
-                <h1 className="text-xl font-bold">Riyokaab <span className="font-light">Data</span></h1>
+                <img src={alIslaamLogo} alt="Logo" className="w-8 h-8 rounded-lg" />
+                <h1 className="text-xl font-bold">Al-islaam <span className="font-light">Data</span></h1>
                 {/* LIVE indicator */}
                 <span className="flex items-center gap-1 bg-green-500/20 border border-green-400/40 px-2 py-0.5 rounded-full ml-1">
                   <span className="relative flex h-2 w-2">
@@ -743,7 +743,7 @@ const SimpleAdminDashboard = () => {
                   : (isSo ? '🔕 Ogeysiisyadu way damanyihiin' : '🔕 Notifications OFF')
                 }
               </button>
-              <div className="text-center text-xs text-gray-400 mt-2">Riyokaab Data Admin v1.0</div>
+              <div className="text-center text-xs text-gray-400 mt-2">Al-islaam Data Admin v1.0</div>
             </div>
           </main>
         </div>

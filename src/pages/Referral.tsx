@@ -45,10 +45,10 @@ const Referral = () => {
   };
 
   const handleShare = async () => {
-    const text = `Isticmaal code-kayga referral-ka Riyokaab Data: ${code}\nSoo degso app-ka: https://riyokaabdata.com`;
+    const text = `Isticmaal code-kayga referral-ka Al-islaam Data: ${code}\nSoo degso app-ka: ${window.location.origin}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: 'Riyokaab Data Referral', text });
+        await navigator.share({ title: 'Al-islaam Data Referral', text });
       } else {
         await navigator.clipboard.writeText(text);
         toast.success('Farriinta waa la copy-gareeye!');

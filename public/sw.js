@@ -1,14 +1,14 @@
-// Kill-switch service worker: removes the old Riyokaab app-shell cache so
+// Kill-switch service worker: removes the old Al-islaam app-shell cache so
 // Lovable preview never shows stale screens/modules again.
-const RIYOKAAB_CACHE_PREFIXES = [
-  'riyokaab-static-',
-  'riyokaab-dynamic-',
-  'riyokaab-api-',
-  'riyokaab-images-',
+const AL_ISLAAM_CACHE_PREFIXES = [
+  'al-islaam-static-',
+  'al-islaam-dynamic-',
+  'al-islaam-api-',
+  'al-islaam-images-',
 ];
 
-const isRiyokaabAppCache = (name) =>
-  RIYOKAAB_CACHE_PREFIXES.some((prefix) => name.startsWith(prefix));
+const isAl-islaamAppCache = (name) =>
+  AL_ISLAAM_CACHE_PREFIXES.some((prefix) => name.startsWith(prefix));
 
 self.addEventListener('install', () => {
   self.skipWaiting();
@@ -20,7 +20,7 @@ self.addEventListener('activate', (event) => {
       try {
         const cacheNames = await caches.keys();
         await Promise.allSettled(
-          cacheNames.filter(isRiyokaabAppCache).map((name) => caches.delete(name))
+          cacheNames.filter(isAl-islaamAppCache).map((name) => caches.delete(name))
         );
 
         await self.clients.claim();

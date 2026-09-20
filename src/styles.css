@@ -8,18 +8,18 @@
 :root {
   --radius: 0.75rem;
   --background: 0 0% 98%;
-  --foreground: 262 30% 12%;
+  --foreground: 0 0% 10%;
   --card: 0 0% 100%;
-  --card-foreground: 262 30% 12%;
+  --card-foreground: 0 0% 10%;
   --popover: 0 0% 100%;
-  --popover-foreground: 262 30% 12%;
-  --primary: 120 100% 22%;
+  --popover-foreground: 0 0% 10%;
+  --primary: 120 100% 25%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 262 20% 95%;
-  --secondary-foreground: 262 30% 15%;
+  --secondary: 0 0% 95%;
+  --secondary-foreground: 0 0% 15%;
   --muted: 220 15% 94%;
   --muted-foreground: 220 10% 45%;
-  --accent: 262 100% 38%;
+  --accent: 0 0% 0%;
   --accent-foreground: 0 0% 100%;
   --orange: 25 95% 53%;
   --orange-foreground: 210 40% 98%;
@@ -39,18 +39,18 @@
   --input: 220 15% 90%;
   --ring: 120 100% 22%;
   --sidebar-background: 0 0% 98%;
-  --sidebar-foreground: 262 30% 20%;
-  --sidebar-primary: 120 100% 22%;
+  --sidebar-foreground: 0 0% 20%;
+  --sidebar-primary: 120 100% 25%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 262 20% 95%;
-  --sidebar-accent-foreground: 262 30% 15%;
+  --sidebar-accent: 0 0% 95%;
+  --sidebar-accent-foreground: 0 0% 15%;
   --sidebar-border: 220 15% 90%;
-  --sidebar-ring: 120 100% 22%;
-  --gradient-primary: linear-gradient(135deg, hsl(120, 100%, 22%), hsl(262, 100%, 38%));
-  --gradient-button: linear-gradient(135deg, hsl(120, 100%, 22%), hsl(120, 90%, 28%));
+  --sidebar-ring: 120 100% 25%;
+  --gradient-primary: linear-gradient(135deg, hsl(120, 100%, 25%), hsl(0, 0%, 0%));
+  --gradient-button: linear-gradient(135deg, hsl(120, 100%, 25%), hsl(120, 100%, 20%));
   --gradient-subtle: linear-gradient(180deg, hsl(0, 0%, 98%), hsl(0, 0%, 100%));
-  --shadow-elegant: 0 10px 30px -10px hsl(120 100% 22% / 0.3);
-  --shadow-glow: 0 0 40px hsl(120 100% 22% / 0.2);
+  --shadow-elegant: 0 10px 30px -10px hsl(120 100% 25% / 0.3);
+  --shadow-glow: 0 0 40px hsl(120 100% 25% / 0.2);
   --shadow-card: 0 4px 15px -2px hsl(0 0% 0% / 0.08);
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --safe-area-inset-top: env(safe-area-inset-top, 0px);
@@ -61,19 +61,19 @@
 }
 
 .dark {
-  --background: 262 30% 6%;
+  --background: 0 0% 6%;
   --foreground: 0 0% 95%;
-  --card: 262 25% 10%;
+  --card: 0 0% 10%;
   --card-foreground: 0 0% 95%;
-  --popover: 262 25% 12%;
+  --popover: 0 0% 12%;
   --popover-foreground: 0 0% 95%;
   --primary: 120 80% 35%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 262 30% 18%;
+  --secondary: 0 0% 18%;
   --secondary-foreground: 0 0% 95%;
-  --muted: 262 20% 15%;
-  --muted-foreground: 262 10% 65%;
-  --accent: 262 90% 55%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 65%;
+  --accent: 120 80% 38%;
   --accent-foreground: 0 0% 100%;
   --orange: 25 95% 55%;
   --hormuud: 140 80% 45%;
@@ -82,18 +82,18 @@
   --somnet: 207 90% 60%;
   --amtel: 0 75% 55%;
   --destructive: 0 72% 51%;
-  --border: 262 20% 18%;
-  --input: 262 20% 15%;
+  --border: 0 0% 18%;
+  --input: 0 0% 15%;
   --ring: 120 80% 35%;
-  --sidebar-background: 262 30% 8%;
+  --sidebar-background: 0 0% 8%;
   --sidebar-foreground: 0 0% 95%;
   --sidebar-primary: 120 80% 35%;
-  --sidebar-accent: 262 30% 18%;
-  --sidebar-border: 262 20% 15%;
+  --sidebar-accent: 0 0% 18%;
+  --sidebar-border: 0 0% 15%;
   --sidebar-ring: 120 80% 35%;
-  --gradient-primary: linear-gradient(135deg, hsl(120, 80%, 35%), hsl(262, 90%, 55%));
+  --gradient-primary: linear-gradient(135deg, hsl(120, 80%, 35%), hsl(0, 0%, 0%));
   --gradient-button: linear-gradient(135deg, hsl(120, 80%, 30%), hsl(120, 70%, 40%));
-  --gradient-subtle: linear-gradient(180deg, hsl(262, 30%, 6%), hsl(262, 25%, 12%));
+  --gradient-subtle: linear-gradient(180deg, hsl(0, 0%, 6%), hsl(0, 0%, 12%));
 }
 
 /* Bridge Tailwind v4 utility classes -> legacy HSL variables. */

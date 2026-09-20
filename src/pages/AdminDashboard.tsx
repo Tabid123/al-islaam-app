@@ -59,7 +59,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn, formatPrice } from '@/lib/utils';
-import { calculateRiyokaabProfit, isUssdFlowCode } from '@/lib/profit';
+import { calculateAl-islaamProfit, isUssdFlowCode } from '@/lib/profit';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -573,7 +573,7 @@ const AdminDashboard = () => {
   const [newProvider, setNewProvider] = useState({
     provider_name: '',
     provider_logo: '',
-    promotional_text: 'Riyokaab Data ka iibso Internet adigoona qof wicin, waqti kasta, xitaa offline!',
+    promotional_text: 'Al-islaam Data ka iibso Internet adigoona qof wicin, waqti kasta, xitaa offline!',
     display_order: 0,
   });
 
@@ -1353,7 +1353,7 @@ const AdminDashboard = () => {
         title: language === 'so' ? 'Guul' : 'Success',
         description: language === 'so' ? 'Shirkadda waa la daray' : 'Provider added successfully',
       });
-      setNewProvider({ provider_name: '', provider_logo: '', promotional_text: 'Riyokaab Data ka iibso Internet adigoona qof wicin, waqti kasta, xitaa offline!', display_order: 0 });
+      setNewProvider({ provider_name: '', provider_logo: '', promotional_text: 'Al-islaam Data ka iibso Internet adigoona qof wicin, waqti kasta, xitaa offline!', display_order: 0 });
       setProviderLogoFile(null);
       setProviderLogoPreview('');
       if (insertedData) {
@@ -1530,7 +1530,7 @@ const AdminDashboard = () => {
 
   const calculatePackageProfit = (pkg: DataPackage): number => {
     const rate = providers.find(provider => provider.id === pkg.provider_id)?.evoucher_rate || 0;
-    return calculateRiyokaabProfit(pkg.selling_price || 0, pkg.cost_price || 0, rate, packageUsesUssdFlow(pkg));
+    return calculateAl-islaamProfit(pkg.selling_price || 0, pkg.cost_price || 0, rate, packageUsesUssdFlow(pkg));
   };
 
   const addPackage = async () => {
@@ -4655,7 +4655,7 @@ const AdminDashboard = () => {
                     <Input
                       value={newProvider.promotional_text}
                       onChange={(e) => setNewProvider({ ...newProvider, promotional_text: e.target.value })}
-                      placeholder="Riyokaab Data ka iibso Internet..."
+                      placeholder="Al-islaam Data ka iibso Internet..."
                     />
                   </div>
                   <div>
@@ -6276,7 +6276,7 @@ const AdminDashboard = () => {
                   <Input
                     value={editingProvider.promotional_text || ''}
                     onChange={(e) => setEditingProvider({ ...editingProvider, promotional_text: e.target.value })}
-                    placeholder="Riyokaab Data ka iibso Internet..."
+                    placeholder="Al-islaam Data ka iibso Internet..."
                   />
                 </div>
                 <div>

@@ -8,7 +8,7 @@ interface QueuedOrder {
   timestamp: number;
 }
 
-const QUEUE_KEY = 'riyokaab_queued_orders';
+const QUEUE_KEY = 'al_islaam_queued_orders';
 
 export const useOfflineSync = () => {
   const { isReallyOnline } = useConnectivity();

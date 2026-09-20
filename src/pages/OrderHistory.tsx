@@ -571,24 +571,24 @@ const OrderHistory = () => {
 
                       if (useLegacyExternalStorage) {
                         await Filesystem.writeFile({
-                          path: `Pictures/RiyokaabInvoices/${fileName}`,
+                          path: `Pictures/AlIslaamInvoices/${fileName}`,
                           data: base64String,
                           directory: Directory.ExternalStorage,
                           recursive: true,
                         });
                         toast({
                           title: 'Waa la keydiyay! ✅',
-                          description: 'Gallery > Pictures > RiyokaabInvoices',
+                          description: 'Gallery > Pictures > AlIslaamInvoices',
                         });
                       } else {
                         await Filesystem.mkdir({
-                          path: 'RiyokaabInvoices',
+                          path: 'AlIslaamInvoices',
                           directory: Directory.Documents,
                           recursive: true,
                         }).catch(() => null);
 
                         await Filesystem.writeFile({
-                          path: `RiyokaabInvoices/${fileName}`,
+                          path: `AlIslaamInvoices/${fileName}`,
                           data: base64String,
                           directory: Directory.Documents,
                           recursive: true,
@@ -596,7 +596,7 @@ const OrderHistory = () => {
 
                         toast({
                           title: 'Waa la keydiyay! ✅',
-                          description: `Documents/RiyokaabInvoices/${fileName}`,
+                          description: `Documents/AlIslaamInvoices/${fileName}`,
                         });
                       }
                     } else {

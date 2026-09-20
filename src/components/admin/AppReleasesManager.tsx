@@ -21,7 +21,7 @@ type AppRelease = {
   created_at: string;
 };
 
-const APP_KEY = 'riyokaab_delivery';
+const APP_KEY = 'al_islaam_delivery';
 const BUCKET = 'app-releases';
 
 const formatBytes = (bytes: number) => {
@@ -86,7 +86,7 @@ const AppReleasesManager = () => {
 
       const { error: insertError } = await supabase.from('app_releases').insert({
         app_key: APP_KEY,
-        app_name: 'Riyokaab Delivery',
+        app_name: 'Al-islaam Delivery',
         version: version.trim(),
         release_notes: notes.trim() || null,
         file_path: path,
@@ -113,7 +113,7 @@ const AppReleasesManager = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold">Apps</h2>
-        <p className="text-muted-foreground">Riyokaab Delivery APK releases ka maamul halkan.</p>
+        <p className="text-muted-foreground">Al-islaam Delivery APK releases ka maamul halkan.</p>
       </div>
 
       {current && (

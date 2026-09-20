@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import riyokaabLogo from '@/assets/riyokaab-logo.jpeg';
+import alIslaamLogo from '@/assets/al-islaam-logo.jpg';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Phone, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -181,7 +181,7 @@ const OfflineMode = () => {
 
       {/* Logo */}
       <div className="mb-6 mt-2">
-        <img alt="Riyokaab Data" className="w-28 h-28 object-contain rounded-2xl shadow-2xl shadow-primary/30 ring-1 ring-border/50 bg-card p-1" src={riyokaabLogo} />
+        <img alt="Al-islaam Data" className="w-28 h-28 object-contain rounded-2xl shadow-2xl shadow-primary/30 ring-1 ring-border/50 bg-card p-1" src={alIslaamLogo} />
       </div>
 
       {/* Tagline */}

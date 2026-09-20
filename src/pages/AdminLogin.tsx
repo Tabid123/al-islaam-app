@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { Shield, Loader2 } from 'lucide-react';
-import riyokaabLogo from '@/assets/riyokaab-logo.jpeg';
+import alIslaamLogo from '@/assets/al-islaam-logo.jpg';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -81,8 +81,8 @@ const AdminLogin = () => {
         <CardHeader className="space-y-4">
           <div className="w-20 h-20 mx-auto">
             <img 
-              src={riyokaabLogo} 
-              alt="Riyokaab Data Logo"
+              src={alIslaamLogo} 
+              alt="Al-islaam Data Logo"
               className="w-full h-full object-cover rounded-2xl"
             />
           </div>
