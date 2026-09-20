@@ -1,4 +1,4 @@
-package com.riyokaab.delivery.util
+package com.alislaam.delivery.util
 
 import android.content.Context
 import java.security.MessageDigest
@@ -6,7 +6,7 @@ import java.util.Locale
 import kotlin.math.roundToLong
 
 object PaymentReceiptDedup {
-    private const val PREFS_NAME = "riyokaab_payment_receipts"
+    private const val PREFS_NAME = "alislaam_payment_receipts"
     private const val PROCESSED_FINGERPRINTS_KEY = "processed_payment_fingerprints"
     private const val MAX_TRACKED_FINGERPRINTS = 2000
 

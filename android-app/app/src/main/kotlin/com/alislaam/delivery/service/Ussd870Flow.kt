@@ -1,4 +1,4 @@
-package com.riyokaab.delivery.service
+package com.alislaam.delivery.service
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -25,7 +25,7 @@ object Ussd870Flow {
 
     private const val TAG = "Ussd870Flow"
 
-    const val PREFS_NAME = "riyokaab_ussd_prefs"
+    const val PREFS_NAME = "alislaam_ussd_prefs"
     const val KEY_FLOW_ACTIVE = "ussd_flow_active"
     const val KEY_COMPLETED_STEPS = "flow870_completed_steps"
     const val KEY_FLOW_FINISHED_TIME = "flow870_finished_time"
@@ -488,7 +488,7 @@ object Ussd870Flow {
 
     /**
      * True kaliya marka qoraalku dhab ahaan yahay dialog USSD ah (input + Send/Cancel).
-     * Tan la'aanteed launcher-ka iyo notification shade-ka ("… Riyokaab Data Active …")
+     * Tan la'aanteed launcher-ka iyo notification shade-ka ("… Al-islaam Data Active …")
      * waxay match-garayn karaan keyword-yada "Data"/"pin" oo flow-ku wuu qaldamaa.
      */
     fun isUssdDialogText(dialogText: String?): Boolean {
