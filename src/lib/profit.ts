@@ -45,3 +45,5 @@ export const isNonFinancialOrder = (
   if (order.is_financial === false) return true;
   return NON_FINANCIAL_PAYMENT_SOURCES.has(String(order.payment_source || '').toLowerCase());
 };
+
+export const calculateRiyokaabProfit = calculateAlIslaamProfit;
