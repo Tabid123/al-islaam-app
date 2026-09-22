@@ -1,4 +1,4 @@
-# Riyokaab Data ProGuard Rules
+# Al-islaam Data ProGuard Rules
 
 # ============================================================
 # CRITICAL: Keep all app classes for USSD automation & Play Store
@@ -6,7 +6,7 @@
 # ============================================================
 -keep class com.iftin.delivery.SplashActivity { *; }
 -keep class com.iftin.delivery.MainActivity { *; }
--keep class com.iftin.delivery.RiyokaabDataApp { *; }
+-keep class com.iftin.delivery.Al-islaamDataApp { *; }
 
 # Keep all services in our package (including AccessibilityService)
 -keep class com.iftin.delivery.service.** { *; }

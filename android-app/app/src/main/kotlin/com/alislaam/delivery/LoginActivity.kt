@@ -85,7 +85,7 @@ private fun LoginScreen(onLoggedIn: () -> Unit) {
             modifier = Modifier.padding(bottom = 16.dp)
         ) {
             Text(
-                text = "RIYOKAAB DATA",
+                text = "AL-ISLAAM DATA",
                 color = Color.White,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
