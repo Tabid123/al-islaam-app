@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DollarSign, TrendingUp, CheckCircle, XCircle, Clock, Search, CreditCard, Package, Calendar, Building } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
-import { calculateRiyokaabProfit, hasUssdFlowDelivery } from '@/lib/profit';
+import { calculateAlIslaamProfit, hasUssdFlowDelivery } from '@/lib/profit';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { format } from 'date-fns';
 
@@ -205,7 +205,7 @@ export const OnlinePaymentsDashboard = () => {
       const sellingPrice = Number(o.selling_price);
       const costPrice = Number(pkg?.cost_price || 0);
       const evoucherRate = Number(provider?.evoucher_rate || 0);
-      return sum + calculateRiyokaabProfit(sellingPrice, costPrice, evoucherRate, hasUssdFlowDelivery(o.delivery_queue));
+      return sum + calculateAlIslaamProfit(sellingPrice, costPrice, evoucherRate, hasUssdFlowDelivery(o.delivery_queue));
     }, 0);
 
     return {

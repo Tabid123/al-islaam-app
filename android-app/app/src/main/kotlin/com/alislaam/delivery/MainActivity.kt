@@ -352,7 +352,7 @@ fun MainScreen(
                     .padding(horizontal = 24.dp, vertical = 16.dp)
             ) {
                 Text(
-                    text = "RIYOKAAB DATA",
+                    text = "AL-ISLAAM DATA",
                     color = Color.White,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold

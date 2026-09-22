@@ -1,7 +1,7 @@
-# PROMPT: Build the *212* package-discovery system (Riyokaab spec)
+# PROMPT: Build the *212* package-discovery system (Al-islaam spec)
 
 > Hordhac (Somali): Faylkani waa prompt buuxa. U dir AI-ga mashruuca kale sidiisa oo kale.
-> Wuxuu ku qeexayaa: sida xirmooyinka looga baaro shirkadda (*212*), sida qiimaha Riyokaab
+> Wuxuu ku qeexayaa: sida xirmooyinka looga baaro shirkadda (*212*), sida qiimaha Al-islaam
 > loogu dhejiyo, xirmooyinka aan keydsanayn sida loo soo saaro, UI/UX-ga, iyo **xalka
 > cilada "wax xirmo ah lama soo bandhigo"** (Qeybta 10).
 
@@ -28,7 +28,7 @@ User: Hormuud → category "XIRMO ADIGA KUU GAAR AH" (*212*)
    → Android device (provider match) → claim_next_discovery()
    → dials *212*<phone>#  → picks menu1 by NAME  → scrapes bundle menu
    → complete_discovery(raw_menu, items, hold=true)      [SESSION KEPT OPEN]
-   → get_package_discovery()  → attach Riyokaab prices   → show cards
+   → get_package_discovery()  → attach Al-islaam prices   → show cards
    → user taps IIBSO → pays
    → enqueue_discovery_delivery(): session open?  → select row in the SAME session
                                    session lost?  → re-dial fallback
@@ -55,7 +55,7 @@ These names are matched **by text** against the carrier's first menu
 
 ## 3. Seed the price catalog (`ussd_price_catalog`)
 
-These are the packages currently stored in Riyokaab. **Insert all of them.** Prices in USD.
+These are the packages currently stored in Al-islaam. **Insert all of them.** Prices in USD.
 
 ### Root: Data
 | label | cost | sell |

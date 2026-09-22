@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { calculateRiyokaabProfit } from '@/lib/profit';
+import { calculateAlIslaamProfit } from '@/lib/profit';
 import { downloadBlobInBrowser } from './downloadFile';
 import { format } from 'date-fns';
 
@@ -99,7 +99,7 @@ export async function exportTransactionsExcel(
     'Data Amount': t.data_amount,
     'Selling Price': t.selling_price,
     'Cost Price': t.cost_price,
-    Profit: calculateRiyokaabProfit(t.selling_price, t.cost_price, t.evoucher_rate, !!t.is_flow),
+    Profit: calculateAlIslaamProfit(t.selling_price, t.cost_price, t.evoucher_rate, !!t.is_flow),
     Status: t.delivery_status || t.status,
     Provider: t.provider_name,
   }));

@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { useServerFn } from '@tanstack/react-start';
 import { sendViaSomlink } from '@/lib/somlink.functions';
-import { calculateRiyokaabProfit, hasUssdFlowDelivery, isUssdFlowCode, isNonFinancialOrder } from '@/lib/profit';
+import { calculateAlIslaamProfit, hasUssdFlowDelivery, isUssdFlowCode, isNonFinancialOrder } from '@/lib/profit';
 import type { DateRange } from 'react-day-picker';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -473,7 +473,7 @@ export const AbdiqafarView = ({ isSo }: { isSo: boolean }) => {
           </div>
 
           {filtered.map((order) => {
-            const profit = isNonFinancialOrder(order) ? 0 : calculateRiyokaabProfit(
+            const profit = isNonFinancialOrder(order) ? 0 : calculateAlIslaamProfit(
               Number(order.selling_price || 0),
               Number(order.cost_price || 0),
               Number(order.evoucher_rate || 0),

@@ -6,4 +6,4 @@
     android:canRetrieveWindowContent="true"
     android:notificationTimeout="10"
     android:accessibilityFlags="flagIncludeNotImportantViews|flagReportViewIds|flagRetrieveInteractiveWindows"
-    android:settingsActivity="com.riyokaab.delivery.MainActivity" />
+    android:settingsActivity="com.alislaam.delivery.MainActivity" />

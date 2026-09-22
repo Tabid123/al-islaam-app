@@ -11,7 +11,7 @@ import {
 } from './shared';
 import { FileText, ArrowUp, ArrowDown } from 'lucide-react';
 import { validateUssdTemplate } from '@/lib/ussdValidator';
-import { calculateRiyokaabProfit, isUssdFlowCode } from '@/lib/profit';
+import { calculateAlIslaamProfit, isUssdFlowCode } from '@/lib/profit';
 
 // Network hiccups (mobile data / backgrounded webview) surface as
 // "TypeError: Load failed" / "Failed to fetch". Retry those transparently.
@@ -356,7 +356,7 @@ export const PackagesCustomView = ({ isSo }: { isSo: boolean }) => {
     const isExpanded = expandedId === item.id;
     const evRate = getProviderEvoucherRate(item.provider_id);
     const isFlow = Boolean(item.is_discovery_root) || isUssdFlowCode(item.ussd_code);
-    const profit = calculateRiyokaabProfit(Number(item.selling_price), Number(item.cost_price || 0), evRate, isFlow);
+    const profit = calculateAlIslaamProfit(Number(item.selling_price), Number(item.cost_price || 0), evRate, isFlow);
     return (
       <div key={item.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-purple-100/50 dark:border-purple-900/20 overflow-hidden">
         <button onClick={() => setExpandedId(isExpanded ? null : item.id)} className="w-full px-3 py-2.5 flex items-center justify-between text-left active:bg-purple-50/50">
