@@ -69,7 +69,11 @@ class MainActivity : ComponentActivity() {
         ).show()
         
         // Request permissions first, then start native features after user responds
-        requestPermissions()
+        try {
+            requestPermissions()
+        } catch (e: Throwable) {
+            android.util.Log.e("MainActivity", "Permission request failed: ${e.message}", e)
+        }
         
         // Do not open battery-optimization settings automatically at startup.
         // The user can request it safely from the existing setup button.
