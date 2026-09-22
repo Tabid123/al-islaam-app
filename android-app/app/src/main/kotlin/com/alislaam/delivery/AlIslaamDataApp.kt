@@ -18,6 +18,18 @@ class AlIslaamDataApp : Application() {
     
     override fun onCreate() {
         super.onCreate()
+
+        // Kaydi khaladka ugu dambeeyay si markii xigta loo tuso (crash silent ah ka hortag).
+        val previous = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, error ->
+            try {
+                getSharedPreferences("alislaam_crash", MODE_PRIVATE).edit()
+                    .putString("last_crash", "${error::class.java.simpleName}: ${error.message}")
+                    .commit()
+            } catch (_: Throwable) { }
+            previous?.uncaughtException(thread, error)
+        }
+        
         
         // DO NOT start foreground service here - Android 12+ (especially 16) 
         // crashes when starting foreground services from Application.onCreate()
