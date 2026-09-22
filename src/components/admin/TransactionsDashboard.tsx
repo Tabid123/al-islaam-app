@@ -138,7 +138,7 @@ export function TransactionsDashboard() {
     const { data, error } = await supabase.rpc('get_admin_transactions_paginated', {
       p_search: debouncedSearch,
       p_status: statusFilter,
-      p_provider_id: providerFilter,
+      p_provider_id: providerFilter === 'all' ? null : providerFilter,
       p_period: periodFilter,
       p_page_size: PAGE_SIZE,
       p_page: currentPage,
