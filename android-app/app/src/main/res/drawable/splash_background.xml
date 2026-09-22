@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/splash_background" />
-    <item android:gravity="center" android:width="220dp" android:height="220dp">
-        <drawable android:drawable="@drawable/al_islaam_logo" />
+    <item>
+        <bitmap
+            android:src="@drawable/al_islaam_logo"
+            android:gravity="center" />
     </item>
 </layer-list>
