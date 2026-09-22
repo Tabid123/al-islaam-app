@@ -1288,7 +1288,7 @@ serve(async (req) => {
       .eq('is_active', true);
 
     // Iftin "Only Me" parity: exact private prices are matched after the public
-    // selling price and before Riyokaab's legacy fuzzy fallback.
+    // selling price and before Al-islaam's legacy fuzzy fallback.
     if (!packages || packages.length === 0) {
       let { data: secretPackages } = await supabase
         .from('data_packages_config')
