@@ -25,7 +25,7 @@ class SmsReceiver : BroadcastReceiver() {
     private val TAG = "SmsReceiver"
     private val API_URL = "https://iwdtpouuxbzqhcqhujfv.supabase.co/functions/v1/process-payment-receipt"
     private val BALANCE_API_URL = "https://iwdtpouuxbzqhcqhujfv.supabase.co/functions/v1/update-sim-balance"
-    private val SMS_LOG_URL = "https://iwdtpouuxbzqhcqhujfv.supabase.co/rest/v1/sms_logs"
+    private val SMS_LOG_URL = "https://iwdtpouuxbzqhcqhujfv.supabase.co/rest/v1/rpc/ingest_sms_log"
     private val SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3ZHRwb3V1eGJ6cWhjcWh1amZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MDYxMDQsImV4cCI6MjEwNTQ4MjEwNH0.WKKJSri396pzVA4D_o-WCdfTrj-rywcqLINXU9zXFic"
     
     private val client = OkHttpClient.Builder()
@@ -779,7 +779,7 @@ class SmsReceiver : BroadcastReceiver() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val json = JSONObject().apply {
-                    put("sim_number", simNumber)
+                    put("p_sim_number", simNumber)
                     put("provider_name", providerName)
                     put("balance_type", balanceInfo.balanceType)
                     put("balance", balanceInfo.amount)
@@ -839,15 +839,15 @@ class SmsReceiver : BroadcastReceiver() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val json = JSONObject().apply {
-                    put("device_id", deviceId)
-                    put("sim_slot", simSlot)
+                    put("p_device_id", deviceId)
+                    put("p_sim_slot", simSlot)
                     put("sim_number", simNumber)
-                    put("sms_type", smsType)
-                    put("sms_sender", smsSender)
-                    put("sms_body", smsBody)
-                    if (amount != null) put("amount", amount)
-                    put("tx_type", txType)
-                    if (counterpartPhone != null) put("counterpart_phone", counterpartPhone)
+                    put("p_sms_type", smsType)
+                    put("p_sms_sender", smsSender)
+                    put("p_sms_body", smsBody)
+                    if (amount != null) put("p_amount", amount)
+                    put("p_tx_type", txType)
+                    if (counterpartPhone != null) put("p_counterpart_phone", counterpartPhone)
                 }
 
                 val requestBody = json.toString()
