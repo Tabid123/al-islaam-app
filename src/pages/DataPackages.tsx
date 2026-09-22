@@ -34,6 +34,26 @@ interface DataPackage {
   ussd_code: string | null;
 }
 
+const normalizePackage = (pkg: any): DataPackage => {
+  const sellingPrice = Number(pkg?.selling_price ?? pkg?.price ?? 0);
+  const costPrice = Number(pkg?.cost_price ?? pkg?.purchase_price ?? sellingPrice);
+
+  return {
+    ...pkg,
+    id: String(pkg?.id ?? ''),
+    package_name: String(pkg?.package_name ?? pkg?.name ?? 'Data Package'),
+    data_amount: String(pkg?.data_amount ?? pkg?.data ?? ''),
+    validity_days: String(pkg?.validity_days ?? pkg?.validity ?? ''),
+    selling_price: Number.isFinite(sellingPrice) ? sellingPrice : 0,
+    cost_price: Number.isFinite(costPrice) ? costPrice : 0,
+    is_active: pkg?.is_active !== false,
+    category_id: pkg?.category_id ?? null,
+    connection_type_label: String(pkg?.connection_type_label ?? 'Mobile Internet'),
+    provider_id: String(pkg?.provider_id ?? ''),
+    ussd_code: pkg?.ussd_code ?? null,
+  };
+};
+
 const DataPackages = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -160,7 +180,8 @@ const DataPackages = () => {
       
       if (!actualProviderId) return [];
       
-      return allPackages[actualProviderId] || [];
+       const providerPackages = allPackages[actualProviderId] || [];
+       return Array.isArray(providerPackages) ? providerPackages.map(normalizePackage) : [];
     } catch (e) {
       console.error('Error loading cached packages:', e);
     }
@@ -190,7 +211,7 @@ const DataPackages = () => {
           if (prov) {
             const { data, error } = await supabase.rpc('get_public_packages_safe', { p_provider_id: prov.id });
             if (error) return cachedPackages;
-            return Array.isArray(data) ? data : [];
+            return Array.isArray(data) ? data.map(normalizePackage) : [];
           }
         }
         return cachedPackages;
@@ -198,7 +219,7 @@ const DataPackages = () => {
       
       const { data, error } = await supabase.rpc('get_public_packages_safe', { p_provider_id: provider });
             if (error) return cachedPackages;
-            return Array.isArray(data) ? data : [];
+             return Array.isArray(data) ? data.map(normalizePackage) : [];
     },
     enabled: !!provider,
     staleTime: 60 * 1000,
