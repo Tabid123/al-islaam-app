@@ -10,7 +10,6 @@ import { formatPrice } from '@/lib/utils';
 import { useOfflineSync } from '@/hooks/useOfflineSync';
 import { useToast } from '@/hooks/use-toast';
 import { showBannerAd, hideBannerAd } from '@/services/admob';
-import { logScreenView } from '@/services/firebase';
 import { useConnectivity } from '@/contexts/ConnectivityContext';
 
 interface Category {
@@ -66,7 +65,6 @@ const DataPackages = () => {
   // Show AdMob banner on mount, hide on unmount
   useEffect(() => {
     showBannerAd();
-    logScreenView('DataPackages');
     return () => {
       hideBannerAd();
     };
@@ -238,24 +236,23 @@ const DataPackages = () => {
 
   const promotionalText = promotionalTextData || 'Al-islaam Data ka iibso Internet adigoona qof wicin, waqti kasta, xitaa offline!';
 
+  const safePackages: DataPackage[] = Array.isArray(packages) ? packages : [];
+  const safeCategories: Category[] = Array.isArray(categories) ? categories : [];
+
   const getFilteredPackages = () => {
-    // If coming from category selection, filter by that category
     if (selectedCategoryId) {
-      return (Array.isArray(packages) ? packages : []).filter((pkg: any) => pkg?.category_id === selectedCategoryId);
+      return safePackages.filter((pkg: any) => pkg?.category_id === selectedCategoryId);
     }
-    
-    if (activeTab === 'All') return Array.isArray(packages) ? packages : [];
-    
-    const selectedCategory = categories.find(c => c.category_name === activeTab);
-    if (!selectedCategory) return packages;
-    
-    return (Array.isArray(packages) ? packages : []).filter((pkg: any) => pkg?.category_id === selectedCategory.id);
+    if (activeTab === 'All') return safePackages;
+    const selectedCategory = safeCategories.find((cat: any) => cat?.category_name === activeTab);
+    if (!selectedCategory) return safePackages;
+    return safePackages.filter((pkg: any) => pkg?.category_id === selectedCategory.id);
   };
 
   const getSelectedCategoryName = () => {
     if (!selectedCategoryId) return '';
     if (selectedCategoryNameFromState) return selectedCategoryNameFromState;
-    const category = categories.find((c: any) => c?.id === selectedCategoryId);
+    const category = safeCategories.find((c: any) => c?.id === selectedCategoryId);
     return category?.category_name || '';
   };
 
@@ -305,7 +302,7 @@ const DataPackages = () => {
 
   const handlePurchase = (packageData: any) => {
     // Get category name for this package
-    const packageCategory = categories.find(c => c.id === packageData.categoryId);
+    const packageCategory = safeCategories.find(c => c.id === packageData.categoryId);
     const categoryName = packageCategory?.category_name || '';
 
     // Discovery packages go straight to the payment page; the operator menu is
@@ -470,7 +467,7 @@ const DataPackages = () => {
             >
               All
             </button>
-            {categories.map((category) => (
+            {safeCategories.map((category) => (
               <button
                 key={category.id}
                 onClick={() => setActiveTab(category.category_name)}
