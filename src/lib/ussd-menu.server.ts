@@ -151,7 +151,7 @@ async function showProviders(session: SessionRow, page: number): Promise<UssdRep
   const { slice, hasNext } = paginate(providers, page);
   await save(session.id, "providers", { ...session.state, page });
   return {
-    ussdcontent: renderList("Riyokaab Data\nDooro shirkadda:", slice.map((p) => p.provider_name), page, hasNext, false),
+    ussdcontent: renderList("Al-islaam Data\nDooro shirkadda:", slice.map((p) => p.provider_name), page, hasNext, false),
     endreply: false,
   };
 }

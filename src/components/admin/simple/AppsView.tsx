@@ -19,7 +19,7 @@ export function AppsView({ isSo }: { isSo: boolean }) {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const appName = 'Riyokaab Delivery';
+  const appName = 'Al-islaam Delivery';
   const [version, setVersion] = useState('');
   const [notes, setNotes] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);

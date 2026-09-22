@@ -38,7 +38,7 @@ export async function exportTransactionsPDF(
   
   // Header
   doc.setFontSize(18);
-  doc.text('Riyokaab Data - Transactions Report', 14, 20);
+  doc.text('Al-islaam Data - Transactions Report', 14, 20);
   doc.setFontSize(10);
   doc.text(`Period: ${summary.period} | Generated: ${format(new Date(), 'MMM dd, yyyy HH:mm')}`, 14, 28);
 
@@ -78,7 +78,7 @@ export async function exportTransactionsExcel(
 
   // Summary sheet
   const summaryData = [
-    ['Riyokaab Data - Transactions Report'],
+    ['Al-islaam Data - Transactions Report'],
     [`Period: ${summary.period}`],
     [`Generated: ${format(new Date(), 'MMM dd, yyyy HH:mm')}`],
     [],

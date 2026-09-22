@@ -4,7 +4,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Legacy Tailwind v3 tokens (HSL channels) — used by ported riyokaab app. */
+/* Legacy Tailwind v3 tokens (HSL channels) — used by ported alislaam app. */
 :root {
   --radius: 0.75rem;
   --background: 0 0% 98%;
