@@ -49,14 +49,11 @@ import java.util.*
 
 class MainActivity : ComponentActivity() {
     private val PERMISSION_REQUEST_CODE = 100
-    private lateinit var database: DeliveryDatabase
     private val apiClient = DeliveryApiClient()
     private var nativeFeaturesInitialized = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        database = DeliveryDatabase.getInstance(this)
         
         // Enable edge-to-edge display
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -332,7 +329,14 @@ fun MainScreen(
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val db = remember(context) { com.alislaam.delivery.data.DeliveryDatabase.getInstance(context) }
+    val db = remember(context) {
+        try {
+            com.alislaam.delivery.data.DeliveryDatabase.getInstance(context)
+        } catch (error: Throwable) {
+            android.util.Log.e("MainScreen", "Local database unavailable: ${error.message}", error)
+            null
+        }
+    }
 
     // Continuously check actual service state
     LaunchedEffect(Unit) {
@@ -348,7 +352,7 @@ fun MainScreen(
 
             // Pending = tasks currently processing in local queue
             try {
-                pendingDeliveries = db.deliveryTaskDao().getProcessingCount()
+                pendingDeliveries = db?.deliveryTaskDao()?.getProcessingCount() ?: 0
             } catch (e: Exception) {
                 pendingDeliveries = 0
             }
@@ -527,8 +531,15 @@ fun MainScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             val logoutCtx = LocalContext.current
-            val authRepo = remember { com.alislaam.delivery.auth.AuthRepository(logoutCtx.applicationContext) }
-            val accountEmail = remember { authRepo.getEmail() }
+            val authRepo = remember {
+                try {
+                    com.alislaam.delivery.auth.AuthRepository(logoutCtx.applicationContext)
+                } catch (error: Throwable) {
+                    android.util.Log.e("MainScreen", "Session storage unavailable: ${error.message}", error)
+                    null
+                }
+            }
+            val accountEmail = remember { authRepo?.getEmail() }
             if (!accountEmail.isNullOrBlank()) {
                 Text(
                     text = "👤 $accountEmail",
@@ -539,7 +550,7 @@ fun MainScreen(
             }
             OutlinedButton(
                 onClick = {
-                    authRepo.logout()
+                    authRepo?.logout()
                     val i = Intent(logoutCtx, LoginActivity::class.java)
                     i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                     logoutCtx.startActivity(i)

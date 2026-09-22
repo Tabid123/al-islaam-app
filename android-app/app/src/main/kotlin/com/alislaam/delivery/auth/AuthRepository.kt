@@ -81,15 +81,23 @@ class AuthRepository(context: Context) {
 
     /** Returns true if a valid (non-expired) session is stored. */
     fun isLoggedIn(): Boolean {
-        val token = prefs.getString(KEY_ACCESS_TOKEN, null) ?: return false
-        val expiresAt = prefs.getLong(KEY_EXPIRES_AT, 0L)
-        // Allow 30s clock skew
-        return token.isNotBlank() && expiresAt > (System.currentTimeMillis() / 1000) + 30
+        return try {
+            val token = prefs.getString(KEY_ACCESS_TOKEN, null) ?: return false
+            val expiresAt = prefs.getLong(KEY_EXPIRES_AT, 0L)
+            token.isNotBlank() && expiresAt > (System.currentTimeMillis() / 1000) + 30
+        } catch (error: Throwable) {
+            recoverCorruptSession(error)
+            false
+        }
     }
 
     /** Waa jiraa session la kaydiyay (xitaa hadduu access token-ku dhacay). */
-    fun hasStoredSession(): Boolean =
+    fun hasStoredSession(): Boolean = try {
         !prefs.getString(KEY_REFRESH_TOKEN, null).isNullOrBlank()
+    } catch (error: Throwable) {
+        recoverCorruptSession(error)
+        false
+    }
 
     /**
      * Cusbooneysii session-ka adigoo isticmaalaya refresh_token.
@@ -149,8 +157,22 @@ class AuthRepository(context: Context) {
         return refreshSession()
     }
 
-    fun getAccessToken(): String? = prefs.getString(KEY_ACCESS_TOKEN, null)
-    fun getEmail(): String? = prefs.getString(KEY_EMAIL, null)
+    fun getAccessToken(): String? = safeString(KEY_ACCESS_TOKEN)
+    fun getEmail(): String? = safeString(KEY_EMAIL)
+
+    private fun safeString(key: String): String? = try {
+        prefs.getString(key, null)
+    } catch (error: Throwable) {
+        recoverCorruptSession(error)
+        null
+    }
+
+    private fun recoverCorruptSession(error: Throwable) {
+        android.util.Log.e("AuthRepository", "Corrupt session cleared: ${error.message}", error)
+        try {
+            prefs.edit().clear().commit()
+        } catch (_: Throwable) { }
+    }
 
 
     suspend fun login(email: String, password: String): LoginResult = withContext(Dispatchers.IO) {
@@ -231,6 +253,10 @@ class AuthRepository(context: Context) {
     }
 
     fun logout() {
-        prefs.edit().clear().apply()
+        try {
+            prefs.edit().clear().apply()
+        } catch (error: Throwable) {
+            recoverCorruptSession(error)
+        }
     }
 }

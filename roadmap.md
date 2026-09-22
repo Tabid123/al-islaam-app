@@ -6,3 +6,4 @@
 - [~] (postponed) Update secrets SOMLINK_PASSWORD and SOMLINK_WALLET_PHONE (secure form)
 - [~] (postponed) Link GitHub API connection "Saabir's GitHub API"
 - [x] Applied uploaded DB schema: 48 tables + app_role enum, RLS/grants, and the app's RPC functions
+- [x] Harden Android APK startup against corrupt session/database cache and fix release package rules
