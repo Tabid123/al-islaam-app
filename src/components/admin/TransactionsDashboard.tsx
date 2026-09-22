@@ -10,7 +10,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { format } from 'date-fns';
 import { formatPrice } from '@/lib/utils';
 import { exportTransactionsPDF, exportTransactionsExcel } from '@/utils/analyticsExporter';
-import { calculateRiyokaabProfit, isNonFinancialOrder } from '@/lib/profit';
+import { calculateAlIslaamProfit, isNonFinancialOrder } from '@/lib/profit';
 
 interface Transaction {
   id: string;
@@ -366,7 +366,7 @@ export function TransactionsDashboard() {
           {transactions.map((t) => {
             const isExpanded = expandedId === t.id;
             const nonFinancial = isNonFinancialOrder(t);
-            const profit = nonFinancial ? 0 : calculateRiyokaabProfit(t.selling_price, t.cost_price || 0, t.evoucher_rate || 0, !!t.is_flow);
+            const profit = nonFinancial ? 0 : calculateAlIslaamProfit(t.selling_price, t.cost_price || 0, t.evoucher_rate || 0, !!t.is_flow);
             const isPositiveProfit = profit > 0;
             const displayStatus = t.delivery_status || t.status;
 

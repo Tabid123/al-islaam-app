@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { DollarSign, TrendingUp, Package, Calendar, Edit, Trash2, Wallet, CreditCard, RefreshCw, Smartphone, Battery, BatteryLow, BatteryMedium, BatteryFull, BatteryCharging, Plus, Star } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
-import { calculateRiyokaabProfit, isUssdFlowCode } from '@/lib/profit';
+import { calculateAlIslaamProfit, isUssdFlowCode } from '@/lib/profit';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
@@ -413,7 +413,7 @@ export const DeviceCard = ({ device, onUpdate }: DeviceCardProps) => {
             const order = d.order as any;
             const sellingPrice = Number(order?.selling_price || 0);
             const costPrice = Number(order?.data_packages_config?.cost_price || 0);
-            return sum + calculateRiyokaabProfit(sellingPrice, costPrice, evoucherRate, isUssdFlowCode((d as any).ussd_code));
+            return sum + calculateAlIslaamProfit(sellingPrice, costPrice, evoucherRate, isUssdFlowCode((d as any).ussd_code));
           }, 0);
 
           return { revenue, cost, profit, orders: periodDeliveries.length };

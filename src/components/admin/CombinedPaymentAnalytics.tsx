@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Loader2, TrendingUp, Package, DollarSign, CheckCircle, Clock, XCircle, CreditCard, MessageSquare, BarChart3 } from "lucide-react";
 import { format, subDays, startOfDay, startOfWeek, startOfMonth, startOfYear, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval } from "date-fns";
-import { calculateRiyokaabProfit, hasUssdFlowDelivery } from '@/lib/profit';
+import { calculateAlIslaamProfit, hasUssdFlowDelivery } from '@/lib/profit';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from "recharts";
 
 type PeriodFilter = "today" | "week" | "month" | "year";
@@ -76,7 +76,7 @@ const CombinedPaymentAnalytics = () => {
     const profit = orderList.reduce((sum, o) => {
       const costPrice = o.data_packages_config?.cost_price || 0;
       const evoucherRate = o.providers_config?.evoucher_rate || 0;
-      return sum + calculateRiyokaabProfit(o.selling_price || 0, costPrice, evoucherRate, hasUssdFlowDelivery(o.delivery_queue));
+      return sum + calculateAlIslaamProfit(o.selling_price || 0, costPrice, evoucherRate, hasUssdFlowDelivery(o.delivery_queue));
     }, 0);
     
     const delivered = orderList.filter(o => o.delivery_status === 'delivered').length;
