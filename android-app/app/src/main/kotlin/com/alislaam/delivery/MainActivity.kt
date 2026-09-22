@@ -71,8 +71,8 @@ class MainActivity : ComponentActivity() {
         // Request permissions first, then start native features after user responds
         requestPermissions()
         
-        // CRITICAL: Force battery optimization exemption check
-        ensureBatteryOptimizationExempted()
+        // Do not open battery-optimization settings automatically at startup.
+        // The user can request it safely from the existing setup button.
         
         setContent {
             AlIslaamDataTheme {
@@ -172,13 +172,31 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun requestBatteryOptimization() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
+        try {
             val powerManager = getSystemService(POWER_SERVICE) as PowerManager
-            if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
-                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-                intent.data = Uri.parse("package:$packageName")
-                startActivity(intent)
+            if (powerManager.isIgnoringBatteryOptimizations(packageName)) {
+                Toast.makeText(this, "Battery optimization hore ayaa looga saaray.", Toast.LENGTH_SHORT).show()
+                return
             }
+
+            val directIntent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                data = Uri.parse("package:$packageName")
+            }
+            if (directIntent.resolveActivity(packageManager) != null) {
+                startActivity(directIntent)
+                return
+            }
+
+            val fallbackIntent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+            if (fallbackIntent.resolveActivity(packageManager) != null) {
+                startActivity(fallbackIntent)
+            } else {
+                Toast.makeText(this, "Battery optimization settings lagama heli karo device-kan.", Toast.LENGTH_LONG).show()
+            }
+        } catch (e: Throwable) {
+            android.util.Log.e("MainActivity", "Battery optimization settings failed: ${e.message}")
+            Toast.makeText(this, "Battery optimization settings lama furi karin.", Toast.LENGTH_LONG).show()
         }
     }
     
