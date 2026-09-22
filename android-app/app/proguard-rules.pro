@@ -4,17 +4,18 @@
 # CRITICAL: Keep all app classes for USSD automation & Play Store
 # Prevents R8/ProGuard from obfuscating class names
 # ============================================================
--keep class com.iftin.delivery.SplashActivity { *; }
--keep class com.iftin.delivery.MainActivity { *; }
--keep class com.iftin.delivery.Al-islaamDataApp { *; }
+-keep class com.alislaam.delivery.SplashActivity { *; }
+-keep class com.alislaam.delivery.LoginActivity { *; }
+-keep class com.alislaam.delivery.MainActivity { *; }
+-keep class com.alislaam.delivery.AlIslaamDataApp { *; }
 
 # Keep all services in our package (including AccessibilityService)
--keep class com.iftin.delivery.service.** { *; }
--keep class com.iftin.delivery.service.UssdAccessibilityService { *; }
--keep class com.iftin.delivery.service.UssdDialerService { *; }
+-keep class com.alislaam.delivery.service.** { *; }
+-keep class com.alislaam.delivery.service.UssdAccessibilityService { *; }
+-keep class com.alislaam.delivery.service.UssdDialerService { *; }
 
 # Keep all receivers
--keep class com.iftin.delivery.receiver.** { *; }
+-keep class com.alislaam.delivery.receiver.** { *; }
 
 # Keep Accessibility Service classes
 -keep class * extends android.accessibilityservice.AccessibilityService { *; }
@@ -25,10 +26,10 @@
 }
 
 # Keep data classes
--keep class com.iftin.delivery.data.** { *; }
+-keep class com.alislaam.delivery.data.** { *; }
 
 # Keep API client
--keep class com.iftin.delivery.api.** { *; }
+-keep class com.alislaam.delivery.api.** { *; }
 
 # ============================================================
 # Kotlin and Coroutines

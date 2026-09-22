@@ -56,7 +56,12 @@ abstract class DeliveryDatabase : RoomDatabase() {
                     context.applicationContext,
                     DeliveryDatabase::class.java,
                     "alislaam_data_database"
-                ).build()
+                )
+                    // The APK previously used another package/name. If that old local
+                    // database cannot match this build, recreate only the device cache.
+                    // Delivery records remain authoritative on the server.
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }

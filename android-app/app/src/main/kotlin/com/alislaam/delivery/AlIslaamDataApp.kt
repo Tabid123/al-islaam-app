@@ -23,8 +23,15 @@ class AlIslaamDataApp : Application() {
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, error ->
             try {
+                var root: Throwable = error
+                while (root.cause != null && root.cause !== root) {
+                    root = root.cause ?: break
+                }
                 getSharedPreferences("alislaam_crash", MODE_PRIVATE).edit()
-                    .putString("last_crash", "${error::class.java.simpleName}: ${error.message}")
+                    .putString(
+                        "last_crash",
+                        "${root::class.java.simpleName}: ${root.message ?: error.message ?: "Unknown startup error"}"
+                    )
                     .commit()
             } catch (_: Throwable) { }
             previous?.uncaughtException(thread, error)
