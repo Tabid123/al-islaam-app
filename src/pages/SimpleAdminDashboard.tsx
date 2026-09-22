@@ -379,7 +379,7 @@ const SimpleAdminDashboard = () => {
     }
   };
 
-  const fetchDataCb = useCallback(() => { fetchData(); }, []);
+  const fetchDataCb = useCallback(() => { fetchData(); }, [selectedPeriod, selectedDate, notificationsEnabled, isSo]);
   useEffect(() => { fetchData(); }, [selectedPeriod, selectedDate]);
 
   // Real-time: auto-refresh when orders, devices, balances, or delivery queue change
