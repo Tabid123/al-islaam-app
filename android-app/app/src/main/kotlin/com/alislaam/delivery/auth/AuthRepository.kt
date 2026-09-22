@@ -36,17 +36,39 @@ class AuthRepository(context: Context) {
         private val JSON = "application/json; charset=utf-8".toMediaType()
     }
 
-    private val masterKey = MasterKey.Builder(context)
-        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-        .build()
+    // Qaar ka mid ah taleefannada Keystore-kooda waa xumaadaa; markaas
+    // EncryptedSharedPreferences waa throw gareeyaa oo app-ku wuu xirmaa.
+    // Sidaa darteed: isku day → nadiifi → ugu dambeyn SharedPreferences caadi ah.
+    private val prefs = buildPrefs(context)
 
-    private val prefs = EncryptedSharedPreferences.create(
-        context,
-        PREFS_NAME,
-        masterKey,
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
+    private fun buildPrefs(context: Context): android.content.SharedPreferences {
+        fun encrypted(): android.content.SharedPreferences {
+            val masterKey = MasterKey.Builder(context)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
+            return EncryptedSharedPreferences.create(
+                context,
+                PREFS_NAME,
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        }
+
+        return try {
+            encrypted()
+        } catch (e: Throwable) {
+            android.util.Log.e("AuthRepository", "Encrypted prefs failed: ${e.message}")
+            try {
+                // Nadiifi file-ka xumaaday, kadib isku day mar labaad.
+                context.deleteSharedPreferences(PREFS_NAME)
+                encrypted()
+            } catch (e2: Throwable) {
+                android.util.Log.e("AuthRepository", "Fallback to plain prefs: ${e2.message}")
+                context.getSharedPreferences("${PREFS_NAME}_plain", Context.MODE_PRIVATE)
+            }
+        }
+    }
 
     private val http = DeliveryApiClient.sharedHttpClient
     private val anonKey: String = DeliveryApiClient().getAnonKey()
