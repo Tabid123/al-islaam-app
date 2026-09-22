@@ -192,10 +192,14 @@ export const ImageUploader = ({ value, onChange, bucket, label }: { value: strin
       });
       if (error) throw error;
 
-      // Al-islaam image buckets are public; use stable public URLs rather than expiring signed URLs.
-      const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(fileName);
-      const finalUrl = publicData?.publicUrl;
-      if (!finalUrl) throw new Error('Public URL lama helin');
+      // Public buckets may be disabled at workspace level. Banner storage is
+      // private, so persist a long-lived signed URL for storefront display.
+      const { data: signedData, error: signedError } = await supabase.storage
+        .from(bucket)
+        .createSignedUrl(fileName, 60 * 60 * 24 * 365 * 10);
+      if (signedError) throw signedError;
+      const finalUrl = signedData?.signedUrl;
+      if (!finalUrl) throw new Error('Sawirka URL-kiisa lama helin');
 
       onChange(finalUrl);
       toast.success('Sawirka waa la geliyay!');
