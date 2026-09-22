@@ -292,8 +292,8 @@ export const DeviceManagement = ({ onDevicesChange }: DeviceManagementProps) => 
           </h2>
           <p className="text-muted-foreground">
             {language === 'so' 
-              ? 'Phone-yada Riyokaab Delivery iyo SIM-yadiisa'
-              : 'Riyokaab Delivery phones and their SIM configurations'
+              ? 'Phone-yada Al-islaam Delivery iyo SIM-yadiisa'
+              : 'Al-islaam Delivery phones and their SIM configurations'
             }
           </p>
         </div>

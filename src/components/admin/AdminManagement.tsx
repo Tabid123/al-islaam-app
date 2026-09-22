@@ -368,14 +368,14 @@ export function AdminManagement() {
               </Label>
               <Input
                 type="email"
-                placeholder="admin@riyokaab.com"
+                placeholder="admin@alislaam.com"
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 className={inviteEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inviteEmail) ? 'border-destructive' : ''}
               />
               {inviteEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inviteEmail) && (
                 <p className="text-xs text-destructive">
-                  {language === 'so' ? 'Fadlan email sax ah geli (tusaale: admin@riyokaab.com)' : 'Please enter a valid email (e.g., admin@riyokaab.com)'}
+                  {language === 'so' ? 'Fadlan email sax ah geli (tusaale: admin@alislaam.com)' : 'Please enter a valid email (e.g., admin@alislaam.com)'}
                 </p>
               )}
             </div>

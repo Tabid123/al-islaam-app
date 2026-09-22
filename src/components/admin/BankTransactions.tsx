@@ -450,7 +450,7 @@ export function BankTransactions({ isSo = true }: { isSo?: boolean }) {
           <div className="space-y-3">
             <div>
               <Label>Username</Label>
-              <Input value={credUsername} onChange={e => setCredUsername(e.target.value)} placeholder="riyokaabbank" />
+              <Input value={credUsername} onChange={e => setCredUsername(e.target.value)} placeholder="alislaambank" />
             </div>
             <div>
               <Label>{isSo ? 'Password Cusub' : 'New Password'}</Label>
