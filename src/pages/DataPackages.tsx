@@ -43,6 +43,9 @@ const DataPackages = () => {
   const selectedPackageId = location.state?.selectedPackageId;
   const autoReorder = location.state?.autoReorder || false;
   const selectedCategoryId = location.state?.selectedCategoryId;
+  // Keep the category name passed by CategorySelection so this page does not depend
+  // on a second categories request just to render the selected category header.
+  const selectedCategoryNameFromState = location.state?.categoryName || '';
   const { isReallyOnline } = useConnectivity();
   
   // Get offline context passed from category selection
@@ -238,23 +241,22 @@ const DataPackages = () => {
   const getFilteredPackages = () => {
     // If coming from category selection, filter by that category
     if (selectedCategoryId) {
-      return packages.filter(pkg => pkg.category_id === selectedCategoryId);
+      return (Array.isArray(packages) ? packages : []).filter((pkg: any) => pkg?.category_id === selectedCategoryId);
     }
     
-    if (activeTab === 'All') return packages;
+    if (activeTab === 'All') return Array.isArray(packages) ? packages : [];
     
     const selectedCategory = categories.find(c => c.category_name === activeTab);
     if (!selectedCategory) return packages;
     
-    return packages.filter(pkg => pkg.category_id === selectedCategory.id);
+    return (Array.isArray(packages) ? packages : []).filter((pkg: any) => pkg?.category_id === selectedCategory.id);
   };
 
   const getSelectedCategoryName = () => {
-    if (selectedCategoryId) {
-      const category = categories.find(c => c.id === selectedCategoryId);
-      return category?.category_name || '';
-    }
-    return '';
+    if (!selectedCategoryId) return '';
+    if (selectedCategoryNameFromState) return selectedCategoryNameFromState;
+    const category = categories.find((c: any) => c?.id === selectedCategoryId);
+    return category?.category_name || '';
   };
 
   const filteredPackages = getFilteredPackages();
