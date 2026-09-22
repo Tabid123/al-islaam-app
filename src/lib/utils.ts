@@ -5,13 +5,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatPrice(price: number): string {
+export function formatPrice(price: number | string | null | undefined): string {
+  const numericPrice = typeof price === 'number' ? price : Number(price);
+
+  // Incomplete package rows must never crash the whole customer journey.
+  if (!Number.isFinite(numericPrice)) return '0';
+
   // For very small amounts (like small profits), show up to 4 decimal places
-  if (price > 0 && price < 0.10) {
-    return price.toFixed(4).replace(/\.?0+$/, '');
+  if (numericPrice > 0 && numericPrice < 0.10) {
+    return numericPrice.toFixed(4).replace(/\.?0+$/, '');
   }
   // For normal amounts, show 2 decimal places and remove trailing zeros
-  return price.toFixed(2).replace(/\.?0+$/, '');
+  return numericPrice.toFixed(2).replace(/\.?0+$/, '');
 }
 
 /**
