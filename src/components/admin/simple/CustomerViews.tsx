@@ -330,6 +330,7 @@ export const OfflineRegistrationsCustomView = ({ isSo }: { isSo: boolean }) => {
   const [showAdd, setShowAdd] = useState(false);
   const [newReg, setNewReg] = useState({ sender_phone: '', receiver_phone: '', provider_id: '' });
   const [providerOptions, setProviderOptions] = useState<Array<{ id: string; provider_name: string }>>([]);
+  const [regStats, setRegStats] = useState({ total: 0, active: 0, inactive: 0, today: 0 });
 
   useEffect(() => {
     supabase.from('providers_config').select('id, provider_name').eq('is_active', true)
@@ -340,8 +341,25 @@ export const OfflineRegistrationsCustomView = ({ isSo }: { isSo: boolean }) => {
 
   const loadRegs = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase.from('offline_registrations').select('*').order('created_at', { ascending: false });
-    setRegs(data || []);
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const startIso = start.toISOString();
+
+    const [rowsResult, totalResult, activeResult, inactiveResult, todayResult] = await Promise.all([
+      supabase.from('offline_registrations').select('*').order('created_at', { ascending: false }),
+      supabase.from('offline_registrations').select('*', { count: 'exact', head: true }),
+      supabase.from('offline_registrations').select('*', { count: 'exact', head: true }).eq('is_active', true),
+      supabase.from('offline_registrations').select('*', { count: 'exact', head: true }).eq('is_active', false),
+      supabase.from('offline_registrations').select('*', { count: 'exact', head: true }).gte('created_at', startIso),
+    ]);
+
+    setRegs(rowsResult.data || []);
+    setRegStats({
+      total: totalResult.count || 0,
+      active: activeResult.count || 0,
+      inactive: inactiveResult.count || 0,
+      today: todayResult.count || 0,
+    });
     setLoading(false);
   }, []);
 
@@ -349,9 +367,9 @@ export const OfflineRegistrationsCustomView = ({ isSo }: { isSo: boolean }) => {
   useRealtimeRefresh(['offline_registrations'], loadRegs, 800, { notify: true, lang: isSo ? 'so' : 'en' });
 
   const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
-  const activeRegs = regs.filter(r => r.is_active).length;
-  const inactiveRegs = regs.filter(r => !r.is_active).length;
-  const todayRegs = regs.filter(r => new Date(r.created_at) >= startOfToday).length;
+  const activeRegs = regStats.active;
+  const inactiveRegs = regStats.inactive;
+  const todayRegs = regStats.today;
 
   const getFiltered = () => {
     let filtered = regs;
@@ -397,13 +415,13 @@ export const OfflineRegistrationsCustomView = ({ isSo }: { isSo: boolean }) => {
   return (
     <div className="space-y-3">
       <StatCardsRow cards={[
-        { label: 'Total', value: regs.length, color: 'bg-purple-500', icon: Users },
+        { label: 'Total', value: regStats.total, color: 'bg-purple-500', icon: Users },
         { label: 'Active', value: activeRegs, color: 'bg-green-500', icon: CheckCircle },
         { label: 'Inactive', value: inactiveRegs, color: 'bg-amber-500', icon: XCircle },
         { label: isSo ? 'Maanta' : 'Today', value: todayRegs, color: 'bg-sky-500', icon: UserPlus },
       ]} />
       <FilterRow filters={[
-        { key: 'all', label: isSo ? 'Dhammaan' : 'All', count: regs.length },
+        { key: 'all', label: isSo ? 'Dhammaan' : 'All', count: regStats.total },
         { key: 'active', label: 'Active', count: activeRegs },
         { key: 'inactive', label: 'Inactive', count: inactiveRegs },
         { key: 'today', label: isSo ? 'Maanta' : 'Today', count: todayRegs },
