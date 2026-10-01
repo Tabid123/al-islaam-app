@@ -29,7 +29,7 @@ serve(async (req)=>{
     const action=String(body?.action||'status');
 
     if(action==='status'){
-      const [{data,statusError},{data:cred, error:credError}]=await Promise.all([
+      const [{data:status,error:statusError},{data:cred,error:credError}]=await Promise.all([
         admin.rpc('waafipay_admin_status'),
         admin.rpc('waafipay_admin_credentials'),
       ]);
