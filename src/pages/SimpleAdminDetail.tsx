@@ -144,8 +144,8 @@ const SimpleAdminDetail = () => {
   const { theme, toggleTheme } = useTheme();
   const config = DETAIL_CONFIGS[type || ''] || DETAIL_CONFIGS.customers;
   const isSo = language === 'so';
-  const { can, loading: permLoading, isSuperAdmin } = useAdminPermissions();
-  const allowed = type === 'waafipay-api' ? isSuperAdmin : can(DETAIL_PERMISSIONS[type || '']);
+  const { can, loading: permLoading } = useAdminPermissions();
+  const allowed = can(DETAIL_PERMISSIONS[type || '']);
 
   useEffect(() => {
     const checkAuth = async () => {
