@@ -1,0 +1,2 @@
+-- Applied to Al-islaam production on 2026-10-01 via Supabase migration.
+-- Canonical implementation lives in database migration history: add_al_islaam_waafipay_integration.
