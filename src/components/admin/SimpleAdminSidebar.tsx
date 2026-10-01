@@ -125,13 +125,12 @@ export function SimpleAdminSidebar() {
   const { language, setLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
-  const { can, isSuperAdmin } = useAdminPermissions();
+  const { can } = useAdminPermissions();
 
   const allowedItem = (item: MenuItem) => {
     if (!item.path) return true;
     const slug = item.path.replace('/simple-admin', '').replace(/^\//, '');
     if (!slug) return true; // dashboard
-    if (slug === 'waafipay-api') return isSuperAdmin;
     const perm = DETAIL_PERMISSIONS[slug];
     return can(perm);
   };
