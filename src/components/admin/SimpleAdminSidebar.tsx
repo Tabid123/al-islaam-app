@@ -100,6 +100,7 @@ const menuGroups: MenuItem[] = [
     label: 'Settings', labelSo: 'Settings', icon: Settings,
     children: [
       { label: 'Payment Settings', labelSo: 'Payment', icon: CreditCard, path: '/simple-admin/payment-settings' },
+      { label: 'WaafiPay API', labelSo: 'WaafiPay API', icon: ShieldCheck, path: '/simple-admin/waafipay-api' },
       { label: 'Offline Payment', labelSo: 'Offline Payment', icon: WifiOff, path: '/simple-admin/offline-payment' },
       
       { label: 'Banners', labelSo: 'Banners', icon: ImageIcon, path: '/simple-admin/banners' },
@@ -124,12 +125,13 @@ export function SimpleAdminSidebar() {
   const { language, setLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
-  const { can } = useAdminPermissions();
+  const { can, isSuperAdmin } = useAdminPermissions();
 
   const allowedItem = (item: MenuItem) => {
     if (!item.path) return true;
     const slug = item.path.replace('/simple-admin', '').replace(/^\//, '');
     if (!slug) return true; // dashboard
+    if (slug === 'waafipay-api') return isSuperAdmin;
     const perm = DETAIL_PERMISSIONS[slug];
     return can(perm);
   };
