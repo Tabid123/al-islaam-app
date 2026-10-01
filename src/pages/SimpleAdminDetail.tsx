@@ -64,6 +64,7 @@ const BulkSmsManager = lazyRetry(() => import('@/components/admin/BulkSmsManager
 const SendNotification = lazyRetry(() => import('@/components/admin/SendNotification').then(m => ({ default: m.SendNotification })));
 const AppSettings = lazyRetry(() => import('@/components/admin/AppSettings'));
 const OfflinePaymentSettings = lazyRetry(() => import('@/components/admin/OfflinePaymentSettings'));
+const WaafiPayIntegrationSettings = lazyRetry(() => import('@/components/admin/WaafiPayIntegrationSettings'));
 
 const AutoTopUpSettings = lazyRetry(() => import('@/components/admin/AutoTopUpSettings').then(m => ({ default: m.AutoTopUpSettings })));
 const AuditLogViewer = lazyRetry(() => import('@/components/admin/AuditLogViewer').then(m => ({ default: m.AuditLogViewer })));
@@ -101,6 +102,7 @@ const DETAIL_CONFIGS: Record<string, DetailConfig> = {
   featured: { title: 'Featured', titleSo: 'Featured', headerBg: 'from-amber-500 to-amber-700' },
   banners: { title: 'Banners', titleSo: 'Banners', headerBg: 'from-green-600 to-green-800' },
   'payment-settings': { title: 'Payment Providers', titleSo: 'Payment Settings', headerBg: 'from-violet-500 to-violet-700' },
+  'waafipay-api': { title: 'WaafiPay API', titleSo: 'WaafiPay API', headerBg: 'from-blue-600 to-cyan-700' },
   'system-codes': { title: 'System Codes', titleSo: 'USSD Codes', headerBg: 'from-indigo-600 to-indigo-800' },
   apps: { title: 'Apps', titleSo: 'Apps', headerBg: 'from-green-600 to-green-800' },
   'somlink-manual': { title: 'Somlink Manual Send', titleSo: 'Somlink Dir Manual', headerBg: 'from-green-600 to-green-800' },
@@ -142,8 +144,8 @@ const SimpleAdminDetail = () => {
   const { theme, toggleTheme } = useTheme();
   const config = DETAIL_CONFIGS[type || ''] || DETAIL_CONFIGS.customers;
   const isSo = language === 'so';
-  const { can, loading: permLoading } = useAdminPermissions();
-  const allowed = can(DETAIL_PERMISSIONS[type || '']);
+  const { can, loading: permLoading, isSuperAdmin } = useAdminPermissions();
+  const allowed = type === 'waafipay-api' ? isSuperAdmin : can(DETAIL_PERMISSIONS[type || '']);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -207,6 +209,7 @@ const SimpleAdminDetail = () => {
       case 'send-notification': return <SendNotification />;
       case 'app-settings': return <AppSettings />;
       case 'offline-payment': return <OfflinePaymentSettings />;
+      case 'waafipay-api': return <WaafiPayIntegrationSettings />;
       
       case 'delivery-rules': return <PackageDeliveryRules />;
       case 'admin-management': return <AdminManagement />;
