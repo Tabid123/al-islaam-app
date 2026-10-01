@@ -46,6 +46,7 @@ export const DETAIL_PERMISSIONS: Record<string, string> = {
   'app-settings': 'manage_settings',
   apps: 'manage_settings',
   'somlink-manual': 'manage_settings',
+  'waafipay-api': 'manage_settings',
 
   'admin-management': 'manage_admins',
   'audit-log': 'view_audit_log',
@@ -73,7 +74,8 @@ export function useAdminPermissions(): AdminPermissionsState {
         const { data } = await supabase.rpc('get_my_admin_context' as any);
         if (!active) return;
         const ctx: any = data || {};
-        setIsSuperAdmin(!!ctx.is_super_admin);
+        const roles = Array.isArray(ctx.roles) ? ctx.roles : [];
+        setIsSuperAdmin(ctx.is_super_admin === true || roles.includes('super_admin'));
         setPermissions(Array.isArray(ctx.permissions) ? ctx.permissions : []);
       } finally {
         if (active) setLoading(false);
