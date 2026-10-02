@@ -34,6 +34,7 @@ interface PaymentProvider {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  payment_mode?: string;
   prefix_code: string | null;
   ussd_code_template: string | null;
   payment_number: string | null;
@@ -74,7 +75,7 @@ const PaymentProviders = () => {
       const {
         data,
         error
-      } = await supabase.rpc('get_active_payment_providers');
+      } = await supabase.from('payment_providers_config').select('id,provider_name,provider_logo,commission_rate,prefix_code,ussd_code_template,payment_number,display_order,is_active,payment_mode').eq('is_active', true).order('display_order');
       if (error) throw error;
       
       // Update cache when we get fresh data
@@ -294,6 +295,8 @@ const PaymentProviders = () => {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorType, setErrorType] = useState<'insufficient_balance' | 'user_cancelled' | 'timeout' | 'wrong_pin' | 'general'>('general');
   const [errorMessage, setErrorMessage] = useState('');
+  const [errorTitle, setErrorTitle] = useState<string | undefined>();
+  const [canRetryPayment, setCanRetryPayment] = useState(true);
   const [showOfflineSheet, setShowOfflineSheet] = useState(false);
   const isOfflineFromState = location.state?.isOffline;
   const [ussdCodeForDisplay, setUssdCodeForDisplay] = useState<string>('');
@@ -682,6 +685,8 @@ const PaymentProviders = () => {
 
   const handlePaymentComplete = async () => {
     if (paymentInFlightRef.current) return;
+    setErrorTitle(undefined);
+    setCanRetryPayment(true);
     const selectedPaymentProvider = paymentProviders.find(p => p.id === selectedProvider);
     const amount = packageData?.price?.replace('$', '') || '0';
 
@@ -720,8 +725,10 @@ const PaymentProviders = () => {
         navigate('/');
       } catch (error: any) {
         // Only a definite decline can start a new payment attempt.
-        if (error?.code === 'payment_declined') localStorage.removeItem(key);
-        setErrorType('general');
+        if (error?.safeToRetry === true) localStorage.removeItem(key);
+        setErrorType(error?.errorType || 'general');
+        setErrorTitle(error?.title);
+        setCanRetryPayment(error?.safeToRetry === true);
         setErrorMessage(error?.message || 'Lacag-bixinta API lama xaqiijin.');
         setShowErrorModal(true);
       } finally {
@@ -1285,6 +1292,8 @@ return <div className="min-h-screen bg-[#efefef] pb-24">
         }}
         errorType={errorType}
         errorMessage={errorMessage}
+        errorTitle={errorTitle}
+        canRetry={canRetryPayment}
       />
 
       {/* Offline Phone Input Sheet */}

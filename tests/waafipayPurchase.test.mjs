@@ -30,7 +30,7 @@ function harness(reply, options = {}) {
       };
       function run(single) {
         let rows = table==='waafipay_transactions'?txs:table==='orders'?orders:table==='delivery_queue'?queue:
-          table==='data_packages_config'?[pkg]:table==='payment_providers_config'?[{id:paymentId,provider_name:'WaafiPay',is_active:true}]:
+          table==='data_packages_config'?[pkg]:table==='payment_providers_config'?[{id:paymentId,provider_name:options.paymentName || 'EVC PLUS',payment_mode:options.paymentMode || 'waafipay_api',is_active:true}]:
           table==='providers_config'?[{id:providerId,provider_name:'Somnet',is_active:true}]:
           table==='delivery_instructions'?[{provider_id:providerId,package_id:null,category_id:null,code_template:'*829*{receiver_phone}*{cost_price}#',sim_password:''}]:[];
         if(action==='insert') {
@@ -50,6 +50,7 @@ function harness(reply, options = {}) {
     'https://deno.land/std@0.168.0/http/server.ts': {serve: h=>{handler=h;}},
     'https://esm.sh/@supabase/supabase-js@2.57.4': {createClient:()=>admin},
     './delivery.ts': helpers,
+    './errors.ts': compile('supabase/functions/waafipay-purchase/errors.ts', {}),
     fetch: async (_url,init) => {calls++; charged=JSON.parse(init.body); if(reply instanceof Error)throw reply; return Response.json(reply);},
   });
   return { backend, txs, orders, queue, get calls(){return calls;}, get charged(){return charged;},
@@ -109,4 +110,40 @@ test('frontend resolves API before both dialer paths and hides its USSD confirma
   const apiBranch=page.slice(page.indexOf("if (route === 'api')"),page.indexOf('OFFLINE MODE DETECTION'));
   assert.ok(apiBranch.includes('purchaseWithWaafiPay'));assert.ok(apiBranch.includes('return;'));assert.ok(!apiBranch.includes('tel:'));
   assert.ok(page.includes('{selectedIsApi ?'));
+});
+
+
+test('explicit mode overrides the display name in both directions', async()=>{
+  const lib=compile('src/lib/waafiPay.ts', {'@/integrations/supabase/client':{}});
+  assert.equal(lib.paymentRoute({provider_name:'EVC PLUS',payment_mode:'waafipay_api'},true),'api');
+  assert.equal(lib.paymentRoute({provider_name:'WaafiPay',payment_mode:'ussd'},true),'ussd');
+  const h=harness(approved,{paymentMode:'ussd',paymentName:'WaafiPay'});
+  assert.equal((await h.pay()).body.error,'package_not_available');assert.equal(h.calls,0);
+});
+test('actual user rejection and Somali insufficient-balance responses stay distinct on retry', async()=>{
+  for(const [reply,expected] of [
+    [{responseCode:'5310',responseMsg:'RCS_USER_REJECTED'},'user_cancelled'],
+    [{responseCode:'5206',responseMsg:'Payment Failed (Haraaga xisaabtaadu kuguma filna, haraagaagu waa: )'},'insufficient_balance'],
+    [{responseCode:'5206',responseMsg:'Payment Failed (Invalid PIN)'},'wrong_pin'],
+    [{responseCode:'5309',responseMsg:'RCS_HPP_USERACTION_TIMEOUT'},'payment_timeout'],
+    [{responseCode:'5010',responseMsg:'You are not authorized to access the requested service'},'waafipay_not_authorized'],
+    [{responseCode:'5206',responseMsg:'Payment Failed'},'payment_declined'],
+  ]) {
+    const h=harness(reply);const first=await h.pay();const retry=await h.pay();
+    assert.equal(first.body.error,expected);assert.equal(retry.body.error,expected);
+    assert.equal(first.body.safe_to_retry,true);assert.equal(h.calls,1);assert.equal(h.orders.length,0);
+  }
+});
+test('pending and lost responses do not offer a fresh payment attempt', async()=>{
+  const h=harness({responseCode:'2001',params:{state:'PENDING'}});
+  const r=await h.pay();assert.equal(r.body.safe_to_retry,false);
+  const lib=compile('src/lib/waafiPay.ts', {'@/integrations/supabase/client':{supabase:{functions:{invoke:async()=>({data:null,error:{context:{json:async()=>r.body}}})}}}});
+  await assert.rejects(lib.purchaseWithWaafiPay({}),e=>e.safeToRetry===false && e.code==='payment_status_unknown');
+});
+test('API error details survive the client and override generic modal content', async()=>{
+  const payload={error:'insufficient_balance',error_type:'insufficient_balance',title:'Haraaga kuma filna',message:'Ku shubo lacag.',safe_to_retry:true};
+  const lib=compile('src/lib/waafiPay.ts', {'@/integrations/supabase/client':{supabase:{functions:{invoke:async()=>({data:null,error:{context:{json:async()=>payload}}})}}}});
+  await assert.rejects(lib.purchaseWithWaafiPay({}),e=>e.errorType==='insufficient_balance' && e.title===payload.title && e.message===payload.message && e.safeToRetry);
+  const modal=fs.readFileSync('src/components/PaymentErrorModal.tsx','utf8');
+  assert.ok(modal.includes('errorMessage || content.message'));assert.ok(modal.includes('errorTitle || content.title'));assert.ok(modal.includes('{canRetry &&'));
 });

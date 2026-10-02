@@ -10,6 +10,8 @@ interface PaymentErrorModalProps {
   onRetry: () => void;
   errorType: 'insufficient_balance' | 'user_cancelled' | 'timeout' | 'wrong_pin' | 'general';
   errorMessage?: string;
+  errorTitle?: string;
+  canRetry?: boolean;
 }
 
 interface ErrorMessage {
@@ -27,7 +29,9 @@ export const PaymentErrorModal: React.FC<PaymentErrorModalProps> = ({
   onClose,
   onRetry,
   errorType,
-  errorMessage
+  errorMessage,
+  errorTitle,
+  canRetry = true
 }) => {
   const { data: errorMessages } = useQuery({
     queryKey: ['errorMessages'],
@@ -133,23 +137,23 @@ export const PaymentErrorModal: React.FC<PaymentErrorModalProps> = ({
 
           {/* Error title */}
           <h2 className="text-2xl font-bold text-foreground mb-3">
-            {content.title}
+            {errorTitle || content.title}
           </h2>
 
           {/* Error message */}
           <p className="text-muted-foreground text-base leading-relaxed mb-8 max-w-sm">
-            {content.message}
+            {errorMessage || content.message}
           </p>
 
           {/* Action buttons */}
           <div className="w-full space-y-3">
-            <Button
+            {canRetry && <Button
               onClick={onRetry}
               className="w-full h-14 text-lg font-semibold rounded-2xl bg-primary hover:bg-primary/90 transition-all hover:scale-105"
             >
               <RefreshCw className="w-5 h-5 mr-2" />
               Isku Day Mar Kale
-            </Button>
+            </Button>}
             
             <Button
               onClick={onClose}
@@ -164,3 +168,4 @@ export const PaymentErrorModal: React.FC<PaymentErrorModalProps> = ({
     </div>
   );
 };
+

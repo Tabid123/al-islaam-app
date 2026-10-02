@@ -970,7 +970,7 @@ export const PaymentSettingsCustomView = ({ isSo }: { isSo: boolean }) => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [newPay, setNewPay] = useState({ provider_name: '', payment_number: '', commission_rate: '0', prefix_code: '', ussd_code_template: '', provider_logo: '' });
+  const [newPay, setNewPay] = useState({ provider_name: '', payment_mode: 'ussd', payment_number: '', commission_rate: '0', prefix_code: '', ussd_code_template: '', provider_logo: '' });
 
   const loadPaymentProviders = useCallback(async () => {
     const { data } = await supabase.from('payment_providers_config').select('*').order('display_order');
@@ -997,7 +997,7 @@ export const PaymentSettingsCustomView = ({ isSo }: { isSo: boolean }) => {
   const savePaymentProvider = async () => {
     if (!newPay.provider_name) { toast.error('Fill provider name'); return; }
     const payload = {
-      provider_name: newPay.provider_name, payment_number: newPay.payment_number || null,
+      provider_name: newPay.provider_name, payment_mode: newPay.payment_mode, payment_number: newPay.payment_number || null,
       commission_rate: Number(newPay.commission_rate || 0), prefix_code: newPay.prefix_code || null,
       ussd_code_template: newPay.ussd_code_template || null, provider_logo: newPay.provider_logo || null,
     };
@@ -1012,14 +1012,14 @@ export const PaymentSettingsCustomView = ({ isSo }: { isSo: boolean }) => {
       setProviders(prev => [data, ...prev]);
       toast.success('Added');
     }
-    setNewPay({ provider_name: '', payment_number: '', commission_rate: '0', prefix_code: '', ussd_code_template: '', provider_logo: '' });
+    setNewPay({ provider_name: '', payment_mode: 'ussd', payment_number: '', commission_rate: '0', prefix_code: '', ussd_code_template: '', provider_logo: '' });
     setShowAdd(false); setEditingId(null);
   };
 
   const startEdit = (item: any) => {
     setEditingId(item.id);
     setNewPay({
-      provider_name: item.provider_name || '', payment_number: item.payment_number || '',
+      provider_name: item.provider_name || '', payment_mode: item.payment_mode || (item.provider_name?.toLowerCase() === 'waafipay' ? 'waafipay_api' : 'ussd'), payment_number: item.payment_number || '',
       commission_rate: String(item.commission_rate || 0), prefix_code: item.prefix_code || '',
       ussd_code_template: item.ussd_code_template || '', provider_logo: item.provider_logo || '',
     });
@@ -1032,7 +1032,7 @@ export const PaymentSettingsCustomView = ({ isSo }: { isSo: boolean }) => {
         { label: 'Total', value: providers.length, icon: CreditCard, color: 'bg-violet-500' },
         { label: 'Active', value: providers.filter(p => p.is_active).length, icon: CheckCircle, color: 'bg-green-500' },
       ]} />
-      <button onClick={() => { setShowAdd(!showAdd); setEditingId(null); setNewPay({ provider_name: '', payment_number: '', commission_rate: '0', prefix_code: '', ussd_code_template: '', provider_logo: '' }); }}
+      <button onClick={() => { setShowAdd(!showAdd); setEditingId(null); setNewPay({ provider_name: '', payment_mode: 'ussd', payment_number: '', commission_rate: '0', prefix_code: '', ussd_code_template: '', provider_logo: '' }); }}
         className="w-full py-2.5 bg-gradient-to-r from-violet-500 to-violet-600 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 active:scale-[0.98]">
         <Plus className="w-4 h-4" /> {isSo ? 'Payment Provider Cusub' : 'Add Payment Provider'}
       </button>
@@ -1040,6 +1040,13 @@ export const PaymentSettingsCustomView = ({ isSo }: { isSo: boolean }) => {
         <div className="bg-white dark:bg-gray-800 rounded-xl border p-3 space-y-2 animate-in slide-in-from-top-2">
           <div className="text-xs font-bold text-gray-600 dark:text-gray-300">{editingId ? '✏️ Edit' : '➕ New'}</div>
           <input value={newPay.provider_name} onChange={e => setNewPay(p => ({...p, provider_name: e.target.value}))} placeholder="Provider Name *" className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 border text-sm outline-none" />
+          <label className="block text-sm font-medium">{isSo ? 'Habka lacag-bixinta' : 'Payment method'}
+            <select value={newPay.payment_mode} onChange={e => setNewPay(p => ({ ...p, payment_mode: e.target.value }))} className="w-full mt-1 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 border text-sm">
+              <option value="ussd">{isSo ? 'Lambar / USSD' : 'Number / USSD'}</option>
+              <option value="waafipay_api">WaafiPay API</option>
+            </select>
+          </label>
+          <p className="text-xs text-muted-foreground">{newPay.payment_mode === 'waafipay_api' ? (isSo ? 'Lacagta waxaa lagu bixinayaa WaafiPay API-ga ku xiran dukaankan.' : 'Payments use the store’s configured WaafiPay account.') : (isSo ? 'Lambarka iyo USSD-ga hoose ayaa lacag-bixinta loo isticmaalaa.' : 'Payments use the number and USSD below.')}</p>
           <input value={newPay.payment_number} onChange={e => setNewPay(p => ({...p, payment_number: e.target.value}))} placeholder="Payment Number" className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 border text-sm outline-none" />
           <div className="grid grid-cols-2 gap-2">
             <input value={newPay.commission_rate} onChange={e => setNewPay(p => ({...p, commission_rate: e.target.value}))} placeholder="Commission %" type="number" className="px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 border text-sm outline-none" />
@@ -1074,6 +1081,7 @@ export const PaymentSettingsCustomView = ({ isSo }: { isSo: boolean }) => {
                 {isExpanded && (
                   <InvoiceAccordionContent isSo={isSo} id={item.id} rows={[
                     { icon: CreditCard, label: 'Provider', value: item.provider_name, color: 'text-purple-500' },
+                    { icon: CreditCard, label: isSo ? 'Habka' : 'Method', value: item.payment_mode === 'waafipay_api' ? 'WaafiPay API' : 'Lambar / USSD', color: 'text-blue-500' },
                     { icon: Phone, label: 'Payment No', value: item.payment_number || '—', color: 'text-green-500' },
                     { icon: DollarSign, label: 'Commission', value: `${item.commission_rate}%`, color: 'text-emerald-500' },
                     ...(item.prefix_code ? [{ icon: Hash, label: 'Prefix', value: item.prefix_code, color: 'text-indigo-500' }] : []),
@@ -1371,3 +1379,4 @@ export const SystemCodesCustomView = ({ isSo }: { isSo: boolean }) => {
     </div>
   );
 };
+

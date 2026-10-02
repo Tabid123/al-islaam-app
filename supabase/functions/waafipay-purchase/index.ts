@@ -1,3 +1,4 @@
+import { paymentFailure } from './errors.ts';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
 import { normalizeProviderSlug, getDeliveryInstruction, queueDeliveryWithBundling, applyFlow870PackageConfig, buildUssdCode, isUssdMalformed, hasActiveDelivery } from './delivery.ts';
@@ -50,16 +51,14 @@ serve(async req => {
       return json({ error: 'reference_mismatch' }, 409);
     }
     if (transaction && transaction.status !== 'approved') {
-      return json({ error: ['unknown', 'processing'].includes(transaction.status) ? 'payment_status_unknown' : 'payment_declined',
-        message: ['unknown', 'processing'].includes(transaction.status) ? unknownMessage : 'Lacag-bixinta ma dhammaan.',
-        reference_id: transaction.reference_id }, 409);
+      return json({ ...paymentFailure({ responseCode: transaction.response_code, responseMsg: transaction.response_message, params: { state: transaction.waafi_state } }, transaction.status), reference_id: transaction.reference_id }, 409);
     }
     const [{ data: pkg, error: pkgError }, { data: provider, error: providerError }] = await Promise.all([
       admin.from('data_packages_config').select('id,provider_id,category_id,package_name,data_amount,selling_price,cost_price,is_active,is_discovery_root,phone_prefix,ussd_code,menu1,menu2,sim_password').eq('id', packageId).maybeSingle(),
-      admin.from('payment_providers_config').select('id,provider_name,is_active').eq('id', paymentProviderId).maybeSingle(),
+      admin.from('payment_providers_config').select('id,provider_name,is_active,payment_mode').eq('id', paymentProviderId).maybeSingle(),
     ]);
     if (pkgError || providerError) throw pkgError || providerError;
-    if (!pkg || !pkg.is_active || !provider?.is_active || String(provider.provider_name).trim().toLowerCase() !== 'waafipay') {
+    if (!pkg || !pkg.is_active || !provider?.is_active || provider.payment_mode !== 'waafipay_api') {
       return json({ error: 'package_not_available', message: 'Xirmada ama WaafiPay ma shaqaynayo.' }, 404);
     }
     // Dynamic carrier-menu prices are not a fixed package price; never charge
@@ -140,8 +139,7 @@ serve(async req => {
       if (updateError) throw updateError;
       transaction = updated;
       if (status !== 'approved') return json({
-        error: status === 'unknown' ? 'payment_status_unknown' : 'payment_declined',
-        message: status === 'unknown' ? unknownMessage : 'Lacag-bixinta waa la diiday ama lama dhammaystirin.',
+        ...paymentFailure(response, status),
         reference_id: reference,
       }, status === 'unknown' ? 409 : 402);
     }
@@ -197,6 +195,8 @@ serve(async req => {
     if (transaction?.status === 'approved') return json({ success: true, payment_approved: true, delivery_queued: false,
       order_id: transaction.order_id || undefined, reference_id: transaction.reference_id,
       message: 'Lacagta waa la xaqiijiyey; dirista xirmada adeegga macaamiisha ha hubiyo.' }, 202);
-    return json({ error: 'payment_status_unknown', message: unknownMessage }, 500);
+    if (!transaction) return json({ error: 'payment_service_unavailable', error_type: 'general', title: 'Adeegga lacag-bixinta lama heli karo',
+      message: 'Codsiga lacag-bixinta lama bilaabin. Sug wax yar, kadib isku day mar kale.', safe_to_retry: true }, 500);
+    return json({ error: 'payment_status_unknown', message: unknownMessage, safe_to_retry: false }, 500);
   }
 });

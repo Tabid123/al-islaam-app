@@ -93,6 +93,7 @@ interface DataPackage {
 }
 
 interface PaymentProvider {
+  payment_mode?: string;
   id: string;
   provider_name: string;
   provider_logo: string | null;
@@ -600,6 +601,7 @@ const AdminDashboard = () => {
 
   const [newPaymentProvider, setNewPaymentProvider] = useState({
     provider_name: '',
+    payment_mode: 'ussd',
     provider_logo: '',
     commission_rate: 0,
     ussd_code_template: '',
@@ -701,6 +703,8 @@ const AdminDashboard = () => {
 
   // Edit Payment Provider state
   const [editingPaymentProvider, setEditingPaymentProvider] = useState<PaymentProvider | null>(null);
+  const [editPaymentMode, setEditPaymentMode] = useState('ussd');
+  const [editPaymentName, setEditPaymentName] = useState('');
   const [editPaymentNumber, setEditPaymentNumber] = useState('');
   const [editPrefixCode, setEditPrefixCode] = useState('');
   const [editUssdTemplate, setEditUssdTemplate] = useState('');
@@ -1645,6 +1649,7 @@ const AdminDashboard = () => {
 
     const { data: insertedPP, error } = await supabase.from('payment_providers_config').insert([{
       provider_name: newPaymentProvider.provider_name,
+      payment_mode: newPaymentProvider.payment_mode,
       provider_logo: logoUrl,
       commission_rate: newPaymentProvider.commission_rate,
       ussd_code_template: newPaymentProvider.ussd_code_template,
@@ -1664,7 +1669,8 @@ const AdminDashboard = () => {
         description: language === 'so' ? 'Payment provider waa la daray' : 'Payment provider added successfully',
       });
       setNewPaymentProvider({ 
-        provider_name: '', 
+        provider_name: '',
+        payment_mode: 'ussd', 
         provider_logo: '', 
         commission_rate: 0,
         ussd_code_template: '',
@@ -1728,10 +1734,12 @@ const AdminDashboard = () => {
   };
 
   const updatePaymentProvider = async () => {
-    if (!editingPaymentProvider) return;
+    if (!editingPaymentProvider || !editPaymentName.trim()) return;
     const { error } = await supabase
       .from('payment_providers_config')
       .update({
+        provider_name: editPaymentName.trim(),
+        payment_mode: editPaymentMode,
         payment_number: editPaymentNumber || null,
         prefix_code: editPrefixCode || null,
         ussd_code_template: editUssdTemplate || null,
@@ -1745,6 +1753,8 @@ const AdminDashboard = () => {
       toast({ title: language === 'so' ? 'Guul' : 'Success', description: language === 'so' ? 'Payment provider waa la cusbooneysiiyay' : 'Payment provider updated' });
       setPaymentProviders(prev => prev.map(p => p.id === editingPaymentProvider.id ? {
         ...p,
+        provider_name: editPaymentName.trim(),
+        payment_mode: editPaymentMode,
         payment_number: editPaymentNumber || null,
         prefix_code: editPrefixCode || null,
         ussd_code_template: editUssdTemplate || null,
@@ -5629,6 +5639,11 @@ const AdminDashboard = () => {
                   )}
                 </div>
 
+                <label className="block text-sm font-medium mb-3">Habka lacag-bixinta
+                  <select value={newPaymentProvider.payment_mode} onChange={e => setNewPaymentProvider({ ...newPaymentProvider, payment_mode: e.target.value })} className="w-full mt-1 border rounded-md p-2 bg-background">
+                    <option value="ussd">Lambar / USSD</option><option value="waafipay_api">WaafiPay API</option>
+                  </select>
+                </label>
                 <div className="grid gap-4 md:grid-cols-3">
                   <div>
                     <Label>{language === 'so' ? 'Magaca' : 'Name'}</Label>
@@ -5722,7 +5737,7 @@ const AdminDashboard = () => {
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold">{provider.provider_name}</span>
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingPaymentProvider(provider); setEditPaymentNumber(provider.payment_number || ''); setEditPrefixCode(provider.prefix_code || ''); setEditUssdTemplate(provider.ussd_code_template || ''); setEditCommissionRate(String(provider.commission_rate)); }}><Pencil className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingPaymentProvider(provider); setEditPaymentName(provider.provider_name); setEditPaymentMode(provider.payment_mode || (provider.provider_name.toLowerCase() === 'waafipay' ? 'waafipay_api' : 'ussd')); setEditPaymentNumber(provider.payment_number || ''); setEditPrefixCode(provider.prefix_code || ''); setEditUssdTemplate(provider.ussd_code_template || ''); setEditCommissionRate(String(provider.commission_rate)); }}><Pencil className="h-3 w-3" /></Button>
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deletePaymentProvider(provider.id)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
                         </div>
                       </div>
@@ -5760,7 +5775,7 @@ const AdminDashboard = () => {
                         <TableCell>{provider.is_active ? 'Active' : 'Inactive'}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="sm" onClick={() => { setEditingPaymentProvider(provider); setEditPaymentNumber(provider.payment_number || ''); setEditPrefixCode(provider.prefix_code || ''); setEditUssdTemplate(provider.ussd_code_template || ''); setEditCommissionRate(String(provider.commission_rate)); }}><Pencil className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="sm" onClick={() => { setEditingPaymentProvider(provider); setEditPaymentName(provider.provider_name); setEditPaymentMode(provider.payment_mode || (provider.provider_name.toLowerCase() === 'waafipay' ? 'waafipay_api' : 'ussd')); setEditPaymentNumber(provider.payment_number || ''); setEditPrefixCode(provider.prefix_code || ''); setEditUssdTemplate(provider.ussd_code_template || ''); setEditCommissionRate(String(provider.commission_rate)); }}><Pencil className="h-4 w-4" /></Button>
                             <Button variant="ghost" size="sm" onClick={() => deletePaymentProvider(provider.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                           </div>
                         </TableCell>
@@ -6565,6 +6580,13 @@ const AdminDashboard = () => {
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
+              <div><Label>{language === 'so' ? 'Magaca' : 'Name'}</Label><Input value={editPaymentName} onChange={e => setEditPaymentName(e.target.value)} /></div>
+              <div><Label>{language === 'so' ? 'Habka lacag-bixinta' : 'Payment method'}</Label>
+                <select value={editPaymentMode} onChange={e => setEditPaymentMode(e.target.value)} className="w-full mt-1 border rounded-md p-2 bg-background">
+                  <option value="ussd">Lambar / USSD</option><option value="waafipay_api">WaafiPay API</option>
+                </select>
+                <p className="text-xs text-muted-foreground mt-1">{editPaymentMode === 'waafipay_api' ? 'WaafiPay API-ga dukaankan ayaa la isticmaalaa.' : 'Lambarka iyo USSD-ga hoose ayaa la isticmaalaa.'}</p>
+              </div>
               <div>
                 <Label>{language === 'so' ? 'Lambarka (Payment Number)' : 'Payment Number'}</Label>
                 <Input value={editPaymentNumber} onChange={(e) => setEditPaymentNumber(e.target.value)} placeholder="617195659" className="mt-1 font-mono" />
@@ -6601,3 +6623,4 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+

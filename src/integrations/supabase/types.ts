@@ -1535,6 +1535,7 @@ export type Database = {
           display_order: number
           id: string
           is_active: boolean
+          payment_mode: string
           payment_number: string | null
           prefix_code: string | null
           provider_logo: string | null
@@ -1548,6 +1549,7 @@ export type Database = {
           display_order?: number
           id?: string
           is_active?: boolean
+          payment_mode?: string
           payment_number?: string | null
           prefix_code?: string | null
           provider_logo?: string | null
@@ -1561,6 +1563,7 @@ export type Database = {
           display_order?: number
           id?: string
           is_active?: boolean
+          payment_mode?: string
           payment_number?: string | null
           prefix_code?: string | null
           provider_logo?: string | null
@@ -2722,3 +2725,4 @@ export const Constants = {
     },
   },
 } as const
+
