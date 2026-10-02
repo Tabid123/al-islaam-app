@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { fetchActivePaymentProviders, readCachedPaymentProviders, PAYMENT_QUERY_KEY } from '@/lib/paymentProviders';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ArrowLeft, Wifi, Smartphone, Clock, Zap, Copy, Check, ChevronRight } from 'lucide-react';
@@ -107,15 +108,11 @@ const DataPackages = () => {
   // Prefetch payment providers immediately
   useEffect(() => {
     queryClient.prefetchQuery({
-      queryKey: ['paymentProviders'],
-      queryFn: async () => {
-        const { data, error } = await supabase.rpc('get_active_payment_providers');
-        if (error) throw error;
-        return data || [];
-      },
+      queryKey: PAYMENT_QUERY_KEY,
+      queryFn: () => isReallyOnline === true ? fetchActivePaymentProviders() : readCachedPaymentProviders(),
       staleTime: 30 * 1000,
     });
-  }, [queryClient]);
+  }, [queryClient, isReallyOnline]);
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories', provider],
@@ -356,8 +353,11 @@ const DataPackages = () => {
     // Get payment number from cached payment providers (admin-configured)
     const senderPrefix = senderPhone?.substring(0, 2) || '';
     const isSomnet = senderPrefix === '68';
-    const cachedPaymentProviders = localStorage.getItem('offline_payment_providers');
-    const paymentProvidersList = cachedPaymentProviders ? JSON.parse(cachedPaymentProviders) : [];
+    const paymentProvidersList = readCachedPaymentProviders().filter(p => p.payment_mode === 'ussd');
+    if (!paymentProvidersList.length) {
+      toast({ title: 'Lacag-bixin USSD ah lama heli karo. Ku xir internet-ka.', variant: 'destructive' });
+      return;
+    }
     let paymentNumber = paymentProvidersList[0]?.payment_number || '';
     let paymentPrefix = isSomnet ? '*812*' : '*712*';
     
@@ -678,8 +678,8 @@ const DataPackages = () => {
               const amount = selectedPackageData?.price?.replace('$', '') || '0';
               const sp = senderPhone?.substring(0, 2) || '';
               const isSn = sp === '68';
-              const cachedPP = localStorage.getItem('offline_payment_providers');
-              const ppList = cachedPP ? JSON.parse(cachedPP) : [];
+              const ppList = readCachedPaymentProviders().filter(p => p.payment_mode === 'ussd');
+              if (!ppList.length) return <p>Lacag-bixin USSD ah lama heli karo. Ku xir internet-ka.</p>;
               let paymentNumber = ppList[0]?.payment_number || '';
               let paymentPrefix = isSn ? '*812*' : '*712*';
               

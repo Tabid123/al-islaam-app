@@ -24,6 +24,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useConnectivity } from '@/contexts/ConnectivityContext';
 import { Capacitor } from '@/shims/capacitor';
+import { activePaymentProviders, fetchActivePaymentProviders, readCachedPaymentProviders, PAYMENT_QUERY_KEY } from '@/lib/paymentProviders';
 import { isApiPayment, paymentRoute, purchaseWithWaafiPay } from '@/lib/waafiPay';
 const CONFIRMATION_VOICE_URL = '/confirmation-voice.mp3';
 interface PaymentProvider {
@@ -64,57 +65,27 @@ const PaymentProviders = () => {
     data: paymentProviders = [],
     isLoading
   } = useQuery({
-    queryKey: ['paymentProviders'],
-    queryFn: async () => {
-      // Try cache first if offline
-      if (!isReallyOnline) {
-        const cached = localStorage.getItem('offline_payment_providers');
-        return cached ? JSON.parse(cached) : [];
-      }
-      
-      const {
-        data,
-        error
-      } = await supabase.from('payment_providers_config').select('id,provider_name,provider_logo,commission_rate,prefix_code,ussd_code_template,payment_number,display_order,is_active,payment_mode').eq('is_active', true).order('display_order');
-      if (error) throw error;
-      
-      // Update cache when we get fresh data
-      if (data) {
-        localStorage.setItem('offline_payment_providers', JSON.stringify(data));
-      }
-      
-      return data || [];
-    },
-    staleTime: 30000, // 30 seconds
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
+    queryKey: PAYMENT_QUERY_KEY,
+    queryFn: () => isReallyOnline === true ? fetchActivePaymentProviders() : readCachedPaymentProviders(),
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
+    refetchOnReconnect: 'always',
     retry: 1,
-    initialData: () => {
-      try {
-        const cached = localStorage.getItem('offline_payment_providers');
-        return cached ? JSON.parse(cached) : undefined;
-      } catch (e) {
-        return undefined;
-      }
-    },
+    initialData: readCachedPaymentProviders,
+    initialDataUpdatedAt: 0,
   });
 
-  // Realtime subscription for payment providers changes
   useEffect(() => {
-    const channel = supabase
-      .channel('payment-providers-realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'payment_providers_config' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['paymentProviders'] });
-        }
-      )
-      .subscribe();
+    if (isReallyOnline === true) queryClient.invalidateQueries({ queryKey: PAYMENT_QUERY_KEY });
+  }, [isReallyOnline, queryClient]);
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+  useEffect(() => {
+    const channel = supabase.channel('payment-providers-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_providers_config' }, () => {
+        queryClient.invalidateQueries({ queryKey: PAYMENT_QUERY_KEY });
+      }).subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
   // Fetch delivery instructions for the package's category
@@ -303,6 +274,13 @@ const PaymentProviders = () => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const paymentInFlightRef = useRef(false);
   const selectedIsApi = isApiPayment(paymentProviders.find(p => p.id === selectedProvider));
+  useEffect(() => {
+    if (selectedProvider && !activePaymentProviders(paymentProviders).some(p => p.id === selectedProvider)) {
+      setSelectedProvider('');
+      setShowPaymentModal(false);
+      setShowConfirmationScreen(false);
+    }
+  }, [paymentProviders, selectedProvider]);
 
   const getProviderFromPrefix = useCallback((phoneNumber: string) => {
     const prefix = phoneNumber.substring(0, 2);
@@ -550,7 +528,17 @@ const PaymentProviders = () => {
     }
     setShowPaymentModal(true);
   }, [selectedProvider]);
-  const handleShowConfirmation = () => {
+  const handleShowConfirmation = async () => {
+    let currentProviders = activePaymentProviders(paymentProviders);
+    if (isReallyOnline === true && !isOfflineFromState) {
+      try {
+        currentProviders = await fetchActivePaymentProviders();
+        queryClient.setQueryData(PAYMENT_QUERY_KEY, currentProviders);
+      } catch {
+        toast({ title: 'Hababka lacag-bixinta lama xaqiijin. Isku day mar kale.', variant: 'destructive' });
+        return;
+      }
+    }
     if (!paymentNumber || !receiverNumber) {
       return;
     }
@@ -597,7 +585,7 @@ const PaymentProviders = () => {
     }
     
     // Validate payment number prefix
-    const selectedPayment = paymentProviders.find(p => p.id === selectedProvider);
+    const selectedPayment = currentProviders.find(p => p.id === selectedProvider);
     const paymentProviderName = selectedPayment?.provider_name;
     
     // EVC (Hormuud) accepts both 61 and 77 prefixes
@@ -642,7 +630,7 @@ const PaymentProviders = () => {
       return '*712*'; // default to EVC
     };
 
-    const selectedPaymentProvider = paymentProviders.find(p => p.id === selectedProvider);
+    const selectedPaymentProvider = currentProviders.find(p => p.id === selectedProvider);
     if (!selectedPaymentProvider) {
       toast({ title: 'Dooro hab lacag-bixin oo shaqaynaya', variant: 'destructive' });
       return;
@@ -663,7 +651,7 @@ const PaymentProviders = () => {
     const displayUssdPrefix = getUssdPrefixForDisplay(selectedPaymentProvider?.provider_name || '');
     // Get correct payment number based on provider
     // Use payment_number from database (admin-configured), fallback to first provider
-    const displayPaymentNumber = selectedPaymentProvider?.payment_number || paymentProviders[0]?.payment_number || '';
+    const displayPaymentNumber = selectedPaymentProvider?.payment_number || currentProviders[0]?.payment_number || '';
     const generatedUssdCode = `${displayUssdPrefix}${displayPaymentNumber}*${formattedDisplayAmount}#`;
     setUssdCodeForDisplay(generatedUssdCode);
 
@@ -687,7 +675,26 @@ const PaymentProviders = () => {
     if (paymentInFlightRef.current) return;
     setErrorTitle(undefined);
     setCanRetryPayment(true);
-    const selectedPaymentProvider = paymentProviders.find(p => p.id === selectedProvider);
+    let currentProviders = activePaymentProviders(paymentProviders);
+    const previousProvider = currentProviders.find(p => p.id === selectedProvider);
+    if (isReallyOnline === true && !isOfflineFromState) {
+      try {
+        currentProviders = await fetchActivePaymentProviders();
+        queryClient.setQueryData(PAYMENT_QUERY_KEY, currentProviders);
+      } catch {
+        setErrorType('general');
+        setErrorMessage('Habka lacag-bixinta lama xaqiijin. Isku day mar kale.');
+        setShowErrorModal(true);
+        return;
+      }
+    }
+    const selectedPaymentProvider = currentProviders.find(p => p.id === selectedProvider);
+    if (!selectedPaymentProvider || isApiPayment(previousProvider) !== isApiPayment(selectedPaymentProvider)) {
+      setShowConfirmationScreen(false);
+      setShowPaymentModal(false);
+      toast({ title: 'Habka lacag-bixinta waa la beddelay. Mar kale dooro.', variant: 'destructive' });
+      return;
+    }
     const amount = packageData?.price?.replace('$', '') || '0';
 
     // API selection is resolved before either online or offline USSD handling.
@@ -699,6 +706,7 @@ const PaymentProviders = () => {
       return;
     }
     if (route === 'api') {
+      if (paymentInFlightRef.current) return;
       paymentInFlightRef.current = true;
       setIsProcessingPayment(true);
       const key = 'al-islaam-waafi-attempt:' + JSON.stringify([selectedProvider, packageData?.id, paymentNumber, receiverNumber, scheduledFor?.toISOString() || null]);
@@ -972,7 +980,7 @@ return <div className="min-h-screen bg-[#efefef] pb-24">
             </p>
           </div>
         )}
-        {paymentProviders
+        {activePaymentProviders(paymentProviders)
           .filter(payment => paymentRoute(payment, isReallyOnline === true && !isOfflineFromState) !== 'unavailable')
           .map(payment => <div key={payment.id} onClick={() => handlePaymentSelect(payment.id)} className={`bg-white rounded-2xl p-4 flex items-center justify-between cursor-pointer border-2 transition-all shadow-lg hover:shadow-xl ${selectedProvider === payment.id ? 'border-primary shadow-xl scale-105' : 'border-transparent'}`} style={{
         boxShadow: selectedProvider === payment.id ? '0 10px 25px rgba(0, 153, 255, 0.3)' : '0 4px 12px rgba(0, 0, 0, 0.1)'

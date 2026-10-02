@@ -8,7 +8,7 @@ const ts = require('typescript');
 function compile(path, dependencies) {
   const exports = {};
   const js = ts.transpileModule(fs.readFileSync(path, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  vm.runInNewContext(js, { exports, require: name => dependencies[name], console, crypto: globalThis.crypto, Request, Response, AbortSignal, Deno: { env: { get: () => 'test' } }, fetch: dependencies.fetch, setTimeout, Date });
+  vm.runInNewContext(js, { exports, require: name => dependencies[name], console, localStorage: dependencies.localStorage, crypto: globalThis.crypto, Request, Response, AbortSignal, Deno: { env: { get: () => 'test' } }, fetch: dependencies.fetch, setTimeout, Date });
   return exports;
 }
 const packageId='11111111-1111-4111-8111-111111111111';
@@ -146,4 +146,34 @@ test('API error details survive the client and override generic modal content', 
   await assert.rejects(lib.purchaseWithWaafiPay({}),e=>e.errorType==='insufficient_balance' && e.title===payload.title && e.message===payload.message && e.safeToRetry);
   const modal=fs.readFileSync('src/components/PaymentErrorModal.tsx','utf8');
   assert.ok(modal.includes('errorMessage || content.message'));assert.ok(modal.includes('errorTitle || content.title'));assert.ok(modal.includes('{canRetry &&'));
+});
+
+
+test('catalog rejects old rows without mode and disabled WaafiPay even in cache',()=>{
+  const values=new Map();const storage={getItem:k=>values.get(k)||null,setItem:(k,v)=>values.set(k,v)};
+  const catalog=compile('src/lib/paymentProviders.ts',{'@/integrations/supabase/client':{},localStorage:storage});
+  values.set('offline_payment_providers',JSON.stringify([{id:'evc',provider_name:'EVC PLUS',is_active:true},{id:'waafi',provider_name:'WaafiPay',is_active:true}]));
+  assert.deepEqual(Array.from(catalog.readCachedPaymentProviders()),[]);
+  values.set(catalog.PAYMENT_CACHE_KEY,JSON.stringify([{id:'evc',provider_name:'EVC PLUS',is_active:true,payment_mode:'waafipay_api'},{id:'waafi',is_active:false,payment_mode:'waafipay_api'},{id:'legacy',is_active:true}]));
+  const result=catalog.readCachedPaymentProviders();assert.equal(result.length,1);assert.equal(result[0].payment_mode,'waafipay_api');
+});
+test('a slow prefetch cannot put old USSD mode or disabled WaafiPay back into the catalog',async()=>{
+  const pending=[];const values=new Map();const storage={getItem:k=>values.get(k)||null,setItem:(k,v)=>values.set(k,v)};
+  const client={from:()=>({select:()=>({eq:()=>({order:()=>new Promise(resolve=>pending.push(resolve))})})})};
+  const catalog=compile('src/lib/paymentProviders.ts',{'@/integrations/supabase/client':{supabase:client},localStorage:storage});
+  const old=catalog.fetchActivePaymentProviders();const fresh=catalog.fetchActivePaymentProviders();
+  pending[1]({data:[{id:'evc',provider_name:'EVC PLUS',is_active:true,payment_mode:'waafipay_api'},{id:'waafi',is_active:false,payment_mode:'waafipay_api'}],error:null});
+  await fresh;
+  pending[0]({data:[{id:'evc',is_active:true,payment_mode:'ussd'},{id:'waafi',is_active:true,payment_mode:'waafipay_api'}],error:null});
+  const result=await old;assert.equal(result.length,1);assert.equal(result[0].payment_mode,'waafipay_api');
+  assert.equal(catalog.readCachedPaymentProviders()[0].payment_mode,'waafipay_api');
+});
+test('all checkout catalog writers use mode-aware fetching and payment rechecks live configuration',()=>{
+  for(const path of ['src/hooks/useOfflineCache.ts','src/pages/DataPackages.tsx','src/pages/PaymentProviders.tsx']) {
+    const source=fs.readFileSync(path,'utf8');assert.ok(!source.includes("rpc('get_active_payment_providers')"));assert.ok(source.includes('fetchActivePaymentProviders'));
+  }
+  const page=fs.readFileSync('src/pages/PaymentProviders.tsx','utf8');
+  const pay=page.slice(page.indexOf('const handlePaymentComplete'),page.indexOf('// Show full-screen loading immediately'));
+  assert.ok(pay.indexOf('await fetchActivePaymentProviders()')<pay.indexOf('const route = paymentRoute'));
+  assert.ok(pay.includes('!selectedPaymentProvider || isApiPayment(previousProvider) !== isApiPayment(selectedPaymentProvider)'));
 });

@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { fetchActivePaymentProviders, readCachedPaymentProviders, PAYMENT_CACHE_KEY, PAYMENT_QUERY_KEY } from '@/lib/paymentProviders';
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,7 +9,7 @@ const CACHE_KEYS = {
   providers: 'offline_providers',
   categories: 'offline_categories',
   packages: 'offline_packages',
-  paymentProviders: 'offline_payment_providers',
+  paymentProviders: PAYMENT_CACHE_KEY,
   deliveryInstructions: 'offline_delivery_instructions',
   banners: 'offline_banners',
   appSettings: 'offline_app_settings',
@@ -55,14 +56,9 @@ export const useOfflineCache = () => {
       localStorage.setItem(CACHE_KEYS.categories, JSON.stringify(uniqueCategories));
       queryClient.setQueryData(['categories'], uniqueCategories);
 
-      // Cache payment providers
-      const { data: paymentProviders } = await supabase.rpc('get_active_payment_providers');
-      if (paymentProviders) {
-        localStorage.setItem(CACHE_KEYS.paymentProviders, JSON.stringify(paymentProviders));
-        queryClient.setQueryData(['paymentProviders'], paymentProviders);
-        
-        // Images are now local assets - no need to pre-fetch
-      }
+      // Share the same catalog (including payment_mode) with checkout.
+      const paymentProviders = await fetchActivePaymentProviders();
+      queryClient.setQueryData(PAYMENT_QUERY_KEY, paymentProviders);
 
       // Cache packages for each provider
       if (providers) {
@@ -140,9 +136,8 @@ export const useOfflineCache = () => {
         queryClient.setQueryData(['categories'], uniqueCategories);
       }
 
-      const cachedPaymentProviders = localStorage.getItem(CACHE_KEYS.paymentProviders);
-      if (cachedPaymentProviders) {
-        queryClient.setQueryData(['paymentProviders'], JSON.parse(cachedPaymentProviders));
+      if (!isReallyOnline && !queryClient.getQueryData(PAYMENT_QUERY_KEY)) {
+        queryClient.setQueryData(PAYMENT_QUERY_KEY, readCachedPaymentProviders(), { updatedAt: 0 });
       }
 
       const cachedPackages = localStorage.getItem(CACHE_KEYS.packages);
@@ -176,6 +171,11 @@ export const useOfflineCache = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (isReallyOnline === true) fetchActivePaymentProviders()
+      .then(data => queryClient.setQueryData(PAYMENT_QUERY_KEY, data)).catch(() => {});
+  }, [isReallyOnline, queryClient]);
+
   // Cache fresh data when online - but only if cache is stale (> 1 hour)
   useEffect(() => {
     if (isReallyOnline && !hasCachedRef.current) {
@@ -207,6 +207,9 @@ export const useOfflineCache = () => {
           }
         }
       )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_providers_config' }, () => {
+        fetchActivePaymentProviders().then(data => queryClient.setQueryData(PAYMENT_QUERY_KEY, data)).catch(() => {});
+      })
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'data_packages_config' },
@@ -245,3 +248,4 @@ export const useOfflineCache = () => {
     forceRefreshCache,
   };
 };
+

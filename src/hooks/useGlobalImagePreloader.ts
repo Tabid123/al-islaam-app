@@ -1,3 +1,4 @@
+import { readCachedPaymentProviders } from '@/lib/paymentProviders';
 import { useEffect } from 'react';
 
 export const useGlobalImagePreloader = () => {
@@ -8,7 +9,7 @@ export const useGlobalImagePreloader = () => {
         const providers = JSON.parse(localStorage.getItem('offline_providers') || '[]');
         const categories = JSON.parse(localStorage.getItem('offline_categories') || '[]');
         const banners = JSON.parse(localStorage.getItem('offline_banners') || '[]');
-        const paymentProviders = JSON.parse(localStorage.getItem('offline_payment_providers') || '[]');
+        const paymentProviders = readCachedPaymentProviders();
         
         // Collect ALL image URLs
         const allImageUrls: string[] = [
@@ -44,3 +45,4 @@ export const useGlobalImagePreloader = () => {
     };
   }, []);
 };
+
