@@ -24,6 +24,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useConnectivity } from '@/contexts/ConnectivityContext';
 import { Capacitor } from '@/shims/capacitor';
+import { isApiPayment, paymentRoute, purchaseWithWaafiPay } from '@/lib/waafiPay';
 const CONFIRMATION_VOICE_URL = '/confirmation-voice.mp3';
 interface PaymentProvider {
   id: string;
@@ -297,6 +298,8 @@ const PaymentProviders = () => {
   const isOfflineFromState = location.state?.isOffline;
   const [ussdCodeForDisplay, setUssdCodeForDisplay] = useState<string>('');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const paymentInFlightRef = useRef(false);
+  const selectedIsApi = isApiPayment(paymentProviders.find(p => p.id === selectedProvider));
 
   const getProviderFromPrefix = useCallback((phoneNumber: string) => {
     const prefix = phoneNumber.substring(0, 2);
@@ -482,7 +485,12 @@ const PaymentProviders = () => {
     : (isADSL ? '1XXXXXX' : 'XXXXXXXXX');
 
   const handlePaymentSelect = useCallback((paymentId: string) => {
+    if (paymentRoute(paymentProviders.find(p => p.id === paymentId), isReallyOnline === true && !isOfflineFromState) === 'unavailable') {
+      toast({ title: 'API wuxuu u baahan yahay internet', variant: 'destructive' });
+      return;
+    }
     setSelectedProvider(paymentId);
+    setPaymentNumberError('');
     const selectedPayment = paymentProviders.find(p => p.id === paymentId);
     if (selectedPayment) {
       const prefix = selectedPayment.prefix_code || getProviderPrefix(selectedPayment.provider_name);
@@ -492,7 +500,7 @@ const PaymentProviders = () => {
         setPaymentNumber(prefix);
       }
     }
-  }, [paymentProviders, getProviderPrefix]);
+  }, [paymentProviders, getProviderPrefix, isReallyOnline, isOfflineFromState]);
   const handlePaymentNumberChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, '');
 
@@ -632,6 +640,21 @@ const PaymentProviders = () => {
     };
 
     const selectedPaymentProvider = paymentProviders.find(p => p.id === selectedProvider);
+    if (!selectedPaymentProvider) {
+      toast({ title: 'Dooro hab lacag-bixin oo shaqaynaya', variant: 'destructive' });
+      return;
+    }
+    if (isApiPayment(selectedPaymentProvider)) {
+      if (isReallyOnline !== true || isOfflineFromState) {
+        toast({ title: 'API wuxuu u baahan yahay internet', variant: 'destructive' });
+        return;
+      }
+      setUssdCodeForDisplay('');
+      playConfirmationVoice();
+      setShowPaymentModal(false);
+      setShowConfirmationScreen(true);
+      return;
+    }
     const displayAmount = packageData?.price?.replace('$', '') || '0';
     const formattedDisplayAmount = formatUssdAmountForDisplay(displayAmount);
     const displayUssdPrefix = getUssdPrefixForDisplay(selectedPaymentProvider?.provider_name || '');
@@ -658,8 +681,55 @@ const PaymentProviders = () => {
   }, [location.state, packageData, paymentNumber, receiverNumber, selectedProvider]);
 
   const handlePaymentComplete = async () => {
+    if (paymentInFlightRef.current) return;
     const selectedPaymentProvider = paymentProviders.find(p => p.id === selectedProvider);
     const amount = packageData?.price?.replace('$', '') || '0';
+
+    // API selection is resolved before either online or offline USSD handling.
+    const route = paymentRoute(selectedPaymentProvider, isReallyOnline === true && !isOfflineFromState);
+    if (route === 'unavailable') {
+      setErrorType('general');
+      setErrorMessage('Habkan lacag-bixinta hadda lama heli karo. Hubi internet-ka ama dooro hab kale.');
+      setShowErrorModal(true);
+      return;
+    }
+    if (route === 'api') {
+      paymentInFlightRef.current = true;
+      setIsProcessingPayment(true);
+      const key = 'al-islaam-waafi-attempt:' + JSON.stringify([selectedProvider, packageData?.id, paymentNumber, receiverNumber, scheduledFor?.toISOString() || null]);
+      let clientReference = '';
+      try {
+        clientReference = localStorage.getItem(key) || crypto.randomUUID();
+        // Persist before sending, so a reload/network failure cannot charge twice.
+        localStorage.setItem(key, clientReference);
+        const result = await purchaseWithWaafiPay({
+          client_reference: clientReference,
+          payer_phone: paymentNumber, receiver_phone: receiverNumber,
+          package_id: packageData?.id, payment_provider_id: selectedProvider,
+          scheduled_for: scheduledFor?.toISOString() || null,
+        });
+        if (result.delivery_queued) localStorage.removeItem(key);
+        setShowConfirmationScreen(false);
+        queryClient.invalidateQueries({ queryKey: ['orders'] });
+        toast({
+          title: 'Lacagta waa la xaqiijiyey',
+          description: result.delivery_queued
+            ? (scheduledFor ? 'Xirmada waa la jadwaleeyey.' : 'Xirmada waa la dirayaa.')
+            : 'Dirista xirmada adeegga macaamiisha ha hubiyo. Lacagta ha ku celin.',
+        });
+        navigate('/');
+      } catch (error: any) {
+        // Only a definite decline can start a new payment attempt.
+        if (error?.code === 'payment_declined') localStorage.removeItem(key);
+        setErrorType('general');
+        setErrorMessage(error?.message || 'Lacag-bixinta API lama xaqiijin.');
+        setShowErrorModal(true);
+      } finally {
+        paymentInFlightRef.current = false;
+        setIsProcessingPayment(false);
+      }
+      return;
+    }
 
     // Show full-screen loading immediately
     setIsProcessingPayment(true);
@@ -896,6 +966,7 @@ return <div className="min-h-screen bg-[#efefef] pb-24">
           </div>
         )}
         {paymentProviders
+          .filter(payment => paymentRoute(payment, isReallyOnline === true && !isOfflineFromState) !== 'unavailable')
           .map(payment => <div key={payment.id} onClick={() => handlePaymentSelect(payment.id)} className={`bg-white rounded-2xl p-4 flex items-center justify-between cursor-pointer border-2 transition-all shadow-lg hover:shadow-xl ${selectedProvider === payment.id ? 'border-primary shadow-xl scale-105' : 'border-transparent'}`} style={{
         boxShadow: selectedProvider === payment.id ? '0 10px 25px rgba(0, 153, 255, 0.3)' : '0 4px 12px rgba(0, 0, 0, 0.1)'
       }}>
@@ -1121,8 +1192,10 @@ return <div className="min-h-screen bg-[#efefef] pb-24">
 
 
 
-            {/* USSD Code with Copy Button */}
-            <div className="flex items-center justify-between bg-muted rounded-lg p-3 border border-border">
+            {/* USSD applies only to the selected USSD payment method. */}
+            {selectedIsApi ? <div className="rounded-lg border border-border bg-muted p-3 text-center text-sm">
+              Xaqiiji lacag-bixinta WaafiPay ee taleefankaaga.
+            </div> : <div className="flex items-center justify-between bg-muted rounded-lg p-3 border border-border">
               <code className="text-lg font-bold text-primary select-all">
                 {ussdCodeForDisplay}
               </code>
@@ -1141,6 +1214,8 @@ return <div className="min-h-screen bg-[#efefef] pb-24">
                 <Copy className="w-4 h-4" />
               </Button>
             </div>
+
+            }
 
             {/* Processing Indicator */}
             {/* Action Buttons */}
