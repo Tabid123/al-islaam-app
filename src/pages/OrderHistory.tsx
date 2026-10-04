@@ -166,16 +166,23 @@ const OrderHistory = () => {
           normalizeSomaliPhone(offlineSenderPhone)
         ].filter(Boolean))];
 
-        const orderChunks = await Promise.all(
-          phonesToSearch.map(async (phone) => {
-            const { data, error } = await (supabase as any).rpc('get_customer_order_history', {
-              customer_phone_number: phone
-            });
+        const [orderChunks, providerResult] = await Promise.all([
+          Promise.all(
+            phonesToSearch.map(async (phone) => {
+              const { data, error } = await (supabase as any).rpc('get_customer_order_history', {
+                customer_phone_number: phone
+              });
 
-            if (error) throw error;
-            return data || [];
-          })
-        );
+              if (error) throw error;
+              return data || [];
+            })
+          ),
+          // History RPC returns provider_id. Resolve its public name and logo,
+          // including companies disabled for new purchases but present in history.
+          supabase.from('providers_config').select('id,provider_name,provider_logo'),
+        ]);
+        if (providerResult.error) throw providerResult.error;
+        const providersById = new Map((providerResult.data || []).map(provider => [provider.id, provider]));
 
         const ordersData = [...new Map(
           orderChunks
@@ -186,6 +193,7 @@ const OrderHistory = () => {
         
         const formattedHistory = ordersData.map((order: any) => {
           const orderDate = new Date(order.created_at);
+          const provider = providersById.get(order.provider_id);
           
           // Calculate expiry date by adding validity period from the package to the order date
           let expiryDate = new Date(orderDate);
@@ -226,8 +234,8 @@ const OrderHistory = () => {
           
           return {
             id: order.id,
-            provider: order.provider_name || 'Unknown',
-            logo: order.provider_logo || null,
+            provider: order.provider_name || provider?.provider_name || 'Unknown',
+            logo: order.provider_logo || provider?.provider_logo || null,
             package: order.package_name,
             data_amount: order.data_amount,
             phone: order.receiver_phone,
