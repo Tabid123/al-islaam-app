@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/lib/utils';
 import PageErrorBoundary from '@/components/PageErrorBoundary';
+import { normalizeSomaliPhone } from '@/lib/customerOrders';
+import { requestPackageDiscovery, readDiscoveryQueue, readDiscoveredPackages, releaseDiscoverySession } from '@/lib/packageDiscovery';
 
 const POLL_MS = 2500; // fallback — real-time ayaa horta wax cusboonaysiiya
 const MAX_WAIT_MS = 300000; // 5 daqiiqo — safka + baarista
@@ -44,7 +46,8 @@ const DiscoverPackages = () => {
   const discoveryIdRef = useRef<string | null>(null);
   const purchasedRef = useRef(false);
   const pollRef = useRef<null | (() => void)>(null);
-  const pollingRef = useRef(false);
+  const attemptRef = useRef(0);
+  const startingRef = useRef(false);
   const channelsRef = useRef<any[]>([]);
 
   const clearChannels = () => {
@@ -54,21 +57,25 @@ const DiscoverPackages = () => {
     channelsRef.current = [];
   };
 
-  // Marka user-ku ka baxo iyadoon lacag la bixin, session-ka shirkadda si degdeg ah u xoree
-  // si taleefanku u qabsado codsiyada baarista ee kale.
-  useEffect(() => () => {
+  const stopDiscovery = () => {
+    attemptRef.current += 1;
     timers.current.forEach(clearTimeout);
+    timers.current = [];
     clearChannels();
     const id = discoveryIdRef.current;
+    discoveryIdRef.current = null;
     if (id && !purchasedRef.current) {
-      supabase.rpc('release_discovery_session', { p_id: id }).then(() => {}, () => {});
+      return releaseDiscoverySession(id).catch(error => console.error('Discovery release failed:', error));
     }
-  }, []);
+    return Promise.resolve();
+  };
+
+  useEffect(() => () => { void stopDiscovery(); }, []);
 
   // Xiriirka shirkadda (session) waa furan yahay muddo kooban kadib baarista.
   useEffect(() => {
     if (phase !== 'results' || packages.length === 0) return;
-    setHoldLeft(sessionSecondsRef.current || HOLD_SECONDS);
+    setHoldLeft(sessionSecondsRef.current);
     const id = setInterval(() => {
       setHoldLeft((s) => (s <= 1 ? 0 : s - 1));
     }, 1000);
@@ -82,33 +89,42 @@ const DiscoverPackages = () => {
 
 
   const startDiscovery = async () => {
-    const clean = receiver.replace(/\D/g, '');
+    if (startingRef.current) return;
+    const clean = normalizeSomaliPhone(receiver);
     if (clean.length !== 9) {
       setError('Fadlan gali lambarka oo dhan (9 lambar)');
       return;
     }
+    const release = stopDiscovery();
+    const attempt = attemptRef.current;
+    const isCurrent = () => attempt === attemptRef.current;
+    startingRef.current = true;
+    purchasedRef.current = false;
+    setReceiver(clean);
+    setPackages([]);
+    setHoldLeft(0);
     setError('');
     setPhase('searching');
     setElapsed(0);
-
-    let data: any = null;
+    let data: any;
     try {
-      const res = await supabase.rpc('request_package_discovery', {
-        p_root_package_id: rootPackage?.id,
-        p_phone: clean,
-      });
-      data = res.data;
-      if (res.error || !data?.success) {
-        setPhase('input');
-        setError(res.error?.message || data?.message || 'Baaritaanku ma bilaaban');
+      await release;
+      if (!isCurrent()) return;
+      data = await requestPackageDiscovery(rootPackage?.id, clean);
+      if (!isCurrent()) {
+        await releaseDiscoverySession(data.id);
         return;
       }
+      discoveryIdRef.current = data.id;
     } catch (e: any) {
-      setPhase('input');
-      setError('Internet-ku wuu go\'ay. Fadlan isku day mar kale.');
+      if (isCurrent()) {
+        setPhase('input');
+        setError(e?.message || 'Internet-ku wuu go\'ay. Fadlan isku day mar kale.');
+      }
       return;
+    } finally {
+      startingRef.current = false;
     }
-    if (data?.id) discoveryIdRef.current = data.id;
 
     const started = Date.now();
     setQueue({ position: 1, ahead: 0, active: false });
@@ -116,13 +132,14 @@ const DiscoverPackages = () => {
     timers.current = [];
     clearChannels();
 
+    let polling = false;
     const poll = async () => {
-      if (pollingRef.current) return;
-      pollingRef.current = true;
+      if (polling || !isCurrent()) return;
+      polling = true;
       try {
         await runPoll();
       } finally {
-        pollingRef.current = false;
+        polling = false;
       }
     };
     pollRef.current = poll;
@@ -133,9 +150,10 @@ const DiscoverPackages = () => {
       // 1) Xaalada safka (booska + ma bilaabatay iyo in kale)
       let q: any = null;
       try {
-        const r = await supabase.rpc('get_discovery_queue_status', { p_id: data.id });
-        q = r.data;
+        q = await readDiscoveryQueue(data.id);
+        if (!isCurrent()) return;
       } catch (e) {
+        if (!isCurrent()) return;
         if (spent <= MAX_WAIT_MS) {
           timers.current.push(setTimeout(poll, 1500));
           return;
@@ -170,15 +188,22 @@ const DiscoverPackages = () => {
       if (q?.status === 'done') {
         let res: any = null;
         try {
-          const r = await supabase.rpc('get_package_discovery', { p_id: data.id });
-          res = r.data;
+          res = await readDiscoveredPackages(data.id);
+          if (!isCurrent()) return;
         } catch (e) {
+          if (!isCurrent()) return;
+          if (spent > MAX_WAIT_MS) {
+            void stopDiscovery();
+            setPhase('input');
+            setError('Xirmooyinka lama soo dejin karin. Fadlan isku day mar kale.');
+            return;
+          }
           timers.current.push(setTimeout(poll, 1000));
           return;
         }
         if (res?.status === 'done') {
           const left = Number(res?.session_seconds_left);
-          sessionSecondsRef.current = Number.isFinite(left) && left > 0 ? left : HOLD_SECONDS;
+          sessionSecondsRef.current = Number.isFinite(left) ? Math.max(0, left) : HOLD_SECONDS;
           setPackages(Array.isArray(res.packages) ? res.packages : []);
           clearChannels();
           setPhase('results');
@@ -187,7 +212,7 @@ const DiscoverPackages = () => {
       }
 
       if (spent > MAX_WAIT_MS) {
-        clearChannels();
+        void stopDiscovery();
         setPhase('input');
         setError('Xirmooyinka lambarkan lama heli karin hadda. Fadlan isku day mar kale.');
         return;
@@ -215,14 +240,14 @@ const DiscoverPackages = () => {
 
   useEffect(() => {
     if (autoStarted.current) return;
-    if (rootPackage && initialReceiver.replace(/\D/g, '').length === 9) {
+    if (rootPackage && normalizeSomaliPhone(initialReceiver).length === 9) {
       autoStarted.current = true;
       startDiscovery();
     }
   }, [rootPackage, initialReceiver]);
 
   const choosePackage = (pkg: any) => {
-    if (pkg.price_missing || pkg.selling_price == null) return;
+    if (holdLeft <= 0 || pkg.price_missing || pkg.selling_price == null) return;
     purchasedRef.current = true;
     navigate(`/payment/${provider}`, {
       state: {
@@ -300,7 +325,7 @@ const DiscoverPackages = () => {
                     : <>Waxaan sugaynaa xiriirka shirkadda. Fadlan sug daqiiqad.</>}
                 </p>
                 <p className="text-xs text-muted-foreground">Lacag weli lama bixin — waad joojin kartaa markasta.</p>
-                <Button variant="outline" size="sm" onClick={() => { timers.current.forEach(clearTimeout); clearChannels(); setPhase('input'); }}>
+                <Button variant="outline" size="sm" onClick={() => { void stopDiscovery(); setPhase('input'); }}>
                   Jooji
                 </Button>
               </>
@@ -315,7 +340,7 @@ const DiscoverPackages = () => {
                 <p className="text-sm text-muted-foreground">
                   Lambarkan xirmo diyaar ah lama helin.
                 </p>
-                <Button variant="outline" onClick={() => setPhase('input')}>Isku day mar kale</Button>
+                <Button variant="outline" onClick={() => { void stopDiscovery(); setPhase('input'); }}>Isku day mar kale</Button>
               </div>
             ) : (
               <>
@@ -384,3 +409,4 @@ const DiscoverPackagesPage = () => (
 );
 
 export default DiscoverPackagesPage;
+
