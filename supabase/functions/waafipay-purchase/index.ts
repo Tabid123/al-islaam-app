@@ -49,10 +49,15 @@ serve(async req => {
     if (lookupError) throw lookupError;
     transaction = existing;
     const storedCustomer = transaction?.raw_response?.request_context?.customer_phone;
+    const storedOffer = transaction?.raw_response?.request_context?.discovery;
+    const discoveryId = String(body.discovery_id || '');
+    const discoveryIndex = String(body.discovery_index ?? '');
     if (transaction && (transaction.payer_phone !== payer || transaction.receiver_phone !== receiver ||
         transaction.package_id !== packageId || transaction.payment_provider_id !== paymentProviderId ||
-        (storedCustomer && requestedCustomer !== null && storedCustomer !== requestedCustomer))) {
-      return json({ error: 'reference_mismatch' }, 409);
+        (storedCustomer && requestedCustomer !== null && storedCustomer !== requestedCustomer) ||
+        (storedOffer && (storedOffer.discovery_id !== discoveryId || String(storedOffer.index) !== discoveryIndex)))) {
+      return json({ error: 'reference_mismatch', safe_to_retry: false,
+        message: 'Lacag-bixin hore ayaa xirmo kale ku xiran. La xiriir adeegga macaamiisha si loo hubiyo ka hor lacag kale.' }, 409);
     }
     // Keep the app account distinct from the wallet payer; old clients still use payer.
     const customer = storedCustomer || requestedCustomer || payer;
@@ -73,7 +78,13 @@ serve(async req => {
         if (orderError) throw orderError;
         deliveryStatus = order?.delivery_status;
       }
-      const queued = transaction.order_id ? await hasActiveDelivery(admin, transaction.order_id) : false;
+      let queued = transaction.order_id ? await hasActiveDelivery(admin, transaction.order_id) : false;
+      if (storedOffer && transaction.order_id && !queued) {
+        const { data: selection, error: selectionError } = await admin.from('ussd_package_discoveries')
+          .select('id').eq('selected_order_id', transaction.order_id).in('session_state', ['selected', 'delivering', 'consumed']).limit(1).maybeSingle();
+        if (selectionError) throw selectionError;
+        queued = !!selection || deliveryStatus === 'delivered';
+      }
       return json({ payment_status: 'approved', payment_approved: true, delivery_queued: queued,
         delivery_status: deliveryStatus, order_id: transaction.order_id || undefined, reference_id: transaction.reference_id });
     }
@@ -81,6 +92,13 @@ serve(async req => {
     if (transaction && transaction.status !== 'approved') {
       return json({ ...paymentFailure({ responseCode: transaction.response_code, responseMsg: transaction.response_message, params: { state: transaction.waafi_state } }, transaction.status), reference_id: transaction.reference_id }, 409);
     }
+    const finalizeDiscovery = async () => {
+      const { data, error } = await admin.rpc('waafipay_finalize_discovery_purchase', { p_transaction_id: transaction.id });
+      if (error || !data?.order_id) throw error || new Error('Discovery dispatch failed');
+      return json({ success: true, payment_approved: true, ...data, reference_id: transaction.reference_id });
+    };
+    // An approved retry uses its server-side price/selection snapshot even if the menu has expired.
+    if (transaction?.status === 'approved' && storedOffer) return await finalizeDiscovery();
     const [{ data: pkg, error: pkgError }, { data: provider, error: providerError }] = await Promise.all([
       admin.from('data_packages_config').select('id,provider_id,category_id,package_name,data_amount,selling_price,cost_price,is_active,is_discovery_root,phone_prefix,ussd_code,menu1,menu2,sim_password').eq('id', packageId).maybeSingle(),
       admin.from('payment_providers_config').select('id,provider_name,is_active,payment_mode').eq('id', paymentProviderId).maybeSingle(),
@@ -89,9 +107,23 @@ serve(async req => {
     if (!pkg || !pkg.is_active || !provider?.is_active || provider.payment_mode !== 'waafipay_api') {
       return json({ error: 'package_not_available', message: 'Xirmada ama WaafiPay ma shaqaynayo.' }, 404);
     }
-    // Dynamic carrier-menu prices are not a fixed package price; never charge
-    // the root package's placeholder amount for one of its discovered offers.
-    if (pkg.is_discovery_root) return json({ error: 'discovery_api_not_supported', message: 'Xirmadan liiska shirkadda wali API laguma bixin karo. Dooro hab kale.' }, 422);
+    let discoveryOffer: any = null;
+    if (pkg.is_discovery_root) {
+      if (!UUID.test(discoveryId) || !/^\d+$/.test(discoveryIndex) || !Number.isFinite(Number(body.expected_price))) {
+        return json({ error: 'discovery_selection_required', message: 'Dib u baar Maamuus, kadib dooro xirmada aad rabto.', safe_to_retry: true }, 422);
+      }
+      if (body.scheduled_for) return json({ error: 'discovery_schedule_not_supported', message: 'Maamuus hadda jadwal looma samayn karo. Ka saar waqtiga qorshaysan.', safe_to_retry: true }, 422);
+      const { data: resolved, error: resolveError } = await admin.rpc('waafipay_resolve_discovery_offer', {
+        p_discovery_id: discoveryId, p_root_package_id: packageId, p_phone: receiver,
+        p_index: discoveryIndex, p_expected_price: Number(body.expected_price),
+      });
+      if (resolveError) throw resolveError;
+      if (!resolved?.success) return json({ error: resolved?.error || 'discovery_offer_unavailable',
+        message: resolved?.message || 'Xirmadan lama xaqiijin. Fadlan dib u baar Maamuus.', safe_to_retry: true }, 409);
+      discoveryOffer = resolved.offer;
+    } else if (discoveryId || discoveryIndex) {
+      return json({ error: 'invalid_purchase_fields', message: 'Xirmada la doortay isma waafaqsana.', safe_to_retry: true }, 422);
+    }
     const prefixes = String(pkg.phone_prefix || '').split(/[,/\s]+/).filter(Boolean);
     if (prefixes.length && !prefixes.some(p => receiver.startsWith(p))) return json({ error: 'invalid_receiver', message: 'Lambarka qaataha xirmadan kuma habboona.' }, 422);
     const { data: blocked } = await admin.rpc('is_phone_blocked', { p_phone: payer });
@@ -102,16 +134,23 @@ serve(async req => {
 
     let scheduledFor = transaction?.raw_response?.request_context?.scheduled_for || body.scheduled_for || null;
     if (!transaction && scheduledFor && (!Number.isFinite(Date.parse(scheduledFor)) || Date.parse(scheduledFor) < Date.now() + 60000)) return json({ error: 'invalid_schedule' }, 422);
-    const instruction = await getDeliveryInstruction(admin, pkg.provider_id, pkg.id, pkg.category_id);
-    const { count: bundleCount, error: bundleError } = await admin.from('package_delivery_rules').select('id', { head: true, count: 'exact' }).eq('source_package_id', pkg.id).eq('is_active', true);
-    if (bundleError) throw bundleError;
-    if (!instruction?.code_template && !bundleCount) return json({ error: 'delivery_not_configured', message: 'Dirista xirmadan lama diyaarin. Lacag lagama jarin.' }, 409);
-    if (!bundleCount) {
-      const flow = applyFlow870PackageConfig(instruction.code_template, pkg, instruction);
-      const code = buildUssdCode(flow.template, receiver, Number(pkg.cost_price), flow.pinCode || instruction.sim_password || '', pkg.ussd_code || '');
-      if (isUssdMalformed(code).malformed) return json({ error: 'delivery_not_configured', message: 'Dirista xirmadan lama diyaarin.' }, 409);
+    let instruction: any = null;
+    let bundleCount = 0;
+    if (!discoveryOffer) {
+      instruction = await getDeliveryInstruction(admin, pkg.provider_id, pkg.id, pkg.category_id);
+      const { count, error: bundleError } = await admin.from('package_delivery_rules').select('id', { head: true, count: 'exact' }).eq('source_package_id', pkg.id).eq('is_active', true);
+      if (bundleError) throw bundleError;
+      bundleCount = count || 0;
+      if (!instruction?.code_template && !bundleCount) return json({ error: 'delivery_not_configured', message: 'Dirista xirmadan lama diyaarin. Lacag lagama jarin.' }, 409);
+      if (!bundleCount) {
+        const flow = applyFlow870PackageConfig(instruction.code_template, pkg, instruction);
+        const code = buildUssdCode(flow.template, receiver, Number(pkg.cost_price), flow.pinCode || instruction.sim_password || '', pkg.ussd_code || '');
+        if (isUssdMalformed(code).malformed) return json({ error: 'delivery_not_configured', message: 'Dirista xirmadan lama diyaarin.' }, 409);
+      }
     }
-    const amount = transaction ? Number(transaction.amount) : Math.round(Number(pkg.selling_price) * 100) / 100;
+    if (discoveryOffer) discoveryOffer.provider_slug = normalizeProviderSlug(providerConfig.provider_name);
+    const amount = transaction ? Number(transaction.amount) : Math.round(Number(discoveryOffer?.selling_price ?? pkg.selling_price) * 100) / 100;
+    const requestContext = { scheduled_for: scheduledFor, customer_phone: customer, ...(discoveryOffer ? { discovery: discoveryOffer } : {}) };
     if (!Number.isFinite(amount) || amount <= 0) return json({ error: 'invalid_package_price' }, 422);
 
     if (!transaction) {
@@ -129,7 +168,7 @@ serve(async req => {
       const { data: inserted, error: insertError } = await admin.from('waafipay_transactions').insert({
         client_reference: ref, reference_id: reference, request_id: requestId, payer_phone: payer, receiver_phone: receiver,
         package_id: packageId, payment_provider_id: paymentProviderId, amount, currency: 'USD',
-        environment: credentials.environment, status: 'processing', raw_response: { request_context: { scheduled_for: scheduledFor, customer_phone: customer } },
+        environment: credentials.environment, status: 'processing', raw_response: { request_context: requestContext },
       }).select('*').single();
       if (insertError?.code === '23505') return json({ error: 'payment_status_unknown', message: unknownMessage }, 409);
       if (insertError) throw insertError;
@@ -144,7 +183,7 @@ serve(async req => {
             channelName: 'WEB', serviceName: 'API_PURCHASE', serviceParams: {
               merchantUid: credentials.merchant_uid, apiUserId: credentials.api_user_id, apiKey: credentials.api_key,
               paymentMethod: 'MWALLET_ACCOUNT', payerInfo: { accountNo: '252' + payer },
-              transactionInfo: { referenceId: reference, invoiceId: reference, amount: amount.toFixed(2), currency: 'USD', description: 'Al-islaam ' + pkg.package_name },
+              transactionInfo: { referenceId: reference, invoiceId: reference, amount: amount.toFixed(2), currency: 'USD', description: 'Al-islaam ' + (discoveryOffer?.label || pkg.package_name) },
             } }),
         });
         if (!result.ok) throw new Error('Provider HTTP error');
@@ -163,7 +202,7 @@ serve(async req => {
         // Store only non-secret fields; never store an upstream credentials echo.
         raw_response: { responseCode: response.responseCode, responseMsg: response.responseMsg,
           params: { state: response.params?.state, transactionId: response.params?.transactionId, txAmount: response.params?.txAmount },
-          request_context: { scheduled_for: scheduledFor, customer_phone: customer } },
+          request_context: requestContext },
         approved_at: status === 'approved' ? new Date().toISOString() : null, updated_at: new Date().toISOString(),
       }).eq('id', transaction.id).select('*').single();
       if (updateError) throw updateError;
@@ -173,6 +212,8 @@ serve(async req => {
         reference_id: reference,
       }, status === 'unknown' ? 409 : 402);
     }
+
+    if (discoveryOffer) return await finalizeDiscovery();
 
     let order: any = null;
     if (transaction.order_id) {

@@ -15,10 +15,29 @@ const packageId='11111111-1111-4111-8111-111111111111';
 const providerId='22222222-2222-4222-8222-222222222222';
 const paymentId='33333333-3333-4333-8333-333333333333';
 const clientRef='44444444-4444-4444-8444-444444444444';
+const scanId='55555555-5555-4555-8555-555555555555';
 function harness(reply, options = {}) {
-  const txs = []; const orders = []; const queue = []; let calls = 0; let charged = null; let handler;
+  const txs = []; const orders = []; const queue = []; let calls = 0; let charged = null; let handler; let resolved = 0; let finalized = 0;
   const pkg = { id: packageId, provider_id: providerId, category_id: null, package_name: 'Test', data_amount: '1GB', selling_price: 1.25, cost_price: 1, is_active: true, is_discovery_root: options.discovery || false, phone_prefix: '68', ussd_code: '*829#' };
-  const admin = { rpc: async name => ({ data: name === 'is_phone_blocked' ? false : { api_key: 'test-only-key', merchant_uid: 'test-only-merchant', api_user_id: 'test-only-user', is_active: true, environment: 'sandbox' } }),
+  const admin = { rpc: async (name,args) => {
+      if(name==='waafipay_resolve_discovery_offer') {
+        resolved++;
+        if(options.resolveFailure) return {data:{success:false,error:options.resolveFailure}};
+        assert.equal(args.p_discovery_id,scanId);assert.equal(args.p_index,'3');
+        return {data:{success:true,offer:{discovery_id:scanId,index:'3',root_package_id:packageId,
+          provider_id:providerId,label:'Internet 1 Saac',carrier_label:'$0.1=Internet 1 Saac',selling_price:0.11,cost_price:0.10}}};
+      }
+      if(name==='waafipay_finalize_discovery_purchase') {
+        finalized++;
+        if(options.finalizeFailsOnce && finalized===1) return {data:null,error:new Error('temporary DB failure')};
+        const tx=txs.find(t=>t.id===args.p_transaction_id);
+        assert.equal(tx.status,'approved');
+        if(!tx.order_id){const order={id:crypto.randomUUID(),customer_phone:tx.raw_response.request_context.customer_phone,delivery_status:'pending'};
+          orders.push(order);queue.push({id:crypto.randomUUID(),order_id:order.id,status:'pending'});tx.order_id=order.id;}
+        return {data:{order_id:tx.order_id,delivery_queued:true}};
+      }
+      return {data:name==='is_phone_blocked'?false:{api_key:'test-only-key',merchant_uid:'test-only-merchant',api_user_id:'test-only-user',is_active:true,environment:'sandbox'}};
+    },
     from(table) {
       let action='select', values, filters=[], selected=false, head=false;
       const q = {
@@ -53,7 +72,7 @@ function harness(reply, options = {}) {
     './errors.ts': compile('supabase/functions/waafipay-purchase/errors.ts', {}),
     fetch: async (_url,init) => {calls++; charged=JSON.parse(init.body); if(reply instanceof Error)throw reply; return Response.json(typeof reply === 'function' ? await reply() : reply);},
   });
-  return { backend, txs, orders, queue, get calls(){return calls;}, get charged(){return charged;},
+  return { backend, txs, orders, queue, get calls(){return calls;}, get resolved(){return resolved;}, get finalized(){return finalized;}, get charged(){return charged;},
     async pay(overrides={}) {
       const response=await handler(new Request('https://example.test', {method:'POST',headers:{Authorization:'Bearer test', 'Content-Type':'application/json'}, body:JSON.stringify({client_reference:clientRef,payer_phone:'+252611111111',receiver_phone:'681111111',package_id:packageId,payment_provider_id:paymentId,...overrides})}));
       return {status:response.status,body:await response.json()};
@@ -129,7 +148,7 @@ test('scheduled delivery is scheduled before insertion',async()=>{
   const h=harness(approved);const when=new Date(Date.now()+3600000).toISOString();await h.pay({scheduled_for:when});
   assert.equal(h.queue[0].status,'scheduled');assert.equal(h.queue[0].scheduled_at,when);
 });
-test('dynamic root packages are refused before any API charge',async()=>{
+test('discovery roots without a verified selection are refused before any charge',async()=>{
   const h=harness(approved,{discovery:true});const r=await h.pay();
   assert.equal(r.status,422);assert.equal(h.calls,0);assert.equal(h.txs.length,0);
 });
@@ -262,4 +281,48 @@ test('all checkout catalog writers use mode-aware fetching and payment rechecks 
   const pay=page.slice(page.indexOf('const handlePaymentComplete'),page.indexOf('// Show full-screen loading immediately'));
   assert.ok(pay.indexOf('await fetchActivePaymentProviders()')<pay.indexOf('const route = paymentRoute'));
   assert.ok(pay.includes('!selectedPaymentProvider || isApiPayment(previousProvider) !== isApiPayment(selectedPaymentProvider)'));
+});
+
+const discoveryInput={discovery_id:scanId,discovery_index:'3',expected_price:0.11,customer_phone:'619535029'};
+const discoveryApproved={...approved,params:{...approved.params,txAmount:'0.11'}};
+test('Maamuus charges the server catalog price and preserves its selected offer and account',async()=>{
+  const h=harness(discoveryApproved,{discovery:true});
+  const r=await h.pay({...discoveryInput,amount:0.01});
+  assert.equal(r.body.payment_approved,true);assert.equal(r.body.delivery_queued,true);
+  assert.equal(h.charged.serviceParams.transactionInfo.amount,'0.11');
+  assert.equal(h.txs[0].raw_response.request_context.discovery.index,'3');
+  assert.equal(h.txs[0].raw_response.request_context.discovery.cost_price,0.10);
+  assert.equal(h.orders[0].customer_phone,'619535029');
+  await h.pay(discoveryInput);await h.pay({...discoveryInput,action:'status'});
+  assert.equal(h.calls,1);assert.equal(h.resolved,1);assert.equal(h.orders.length,1);assert.equal(h.queue.length,1);
+});
+test('expired, changed-price and unavailable offers never debit',async()=>{
+  for(const resolveFailure of ['discovery_expired','discovery_price_changed','discovery_offer_unavailable']) {
+    const h=harness(discoveryApproved,{discovery:true,resolveFailure});const r=await h.pay(discoveryInput);
+    assert.equal(r.body.error,resolveFailure);assert.equal(h.calls,0);assert.equal(h.txs.length,0);
+  }
+});
+test('a payment reference cannot switch to another Maamuus option or scan',async()=>{
+  const h=harness(discoveryApproved,{discovery:true});await h.pay(discoveryInput);
+  for(const change of [{discovery_index:'2'},{discovery_id:crypto.randomUUID()}]) {
+    assert.equal((await h.pay({...discoveryInput,...change})).body.error,'reference_mismatch');
+    assert.equal((await h.pay({...discoveryInput,...change,action:'status'})).body.error,'reference_mismatch');
+  }
+  assert.equal(h.calls,1);assert.equal(h.orders.length,1);
+});
+test('approved Maamuus fulfillment can resume after DB failure without resolving again or charging twice',async()=>{
+  const h=harness(discoveryApproved,{discovery:true,finalizeFailsOnce:true});
+  const first=await h.pay(discoveryInput);
+  assert.equal(first.body.payment_approved,true);assert.equal(first.body.delivery_queued,false);
+  assert.equal(h.orders.length,0);
+  const status=await h.pay({...discoveryInput,action:'status'});
+  assert.equal(status.body.payment_approved,true);assert.equal(status.body.delivery_queued,false);assert.equal(h.finalized,1);
+  assert.equal((await h.pay(discoveryInput)).body.delivery_queued,true);
+  assert.equal(h.calls,1);assert.equal(h.resolved,1);assert.equal(h.finalized,2);assert.equal(h.orders.length,1);
+});
+test('Maamuus decline and unknown responses never finalize delivery',async()=>{
+  for(const reply of [{responseCode:'5310',params:{state:'DECLINED'}},new Error('timeout')]) {
+    const h=harness(reply,{discovery:true});await h.pay(discoveryInput);
+    assert.equal(h.finalized,0);assert.equal(h.orders.length,0);assert.equal(h.queue.length,0);
+  }
 });

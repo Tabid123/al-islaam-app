@@ -707,6 +707,8 @@ const PaymentProviders = () => {
       if (paymentInFlightRef.current) return;
       paymentInFlightRef.current = true;
       setIsProcessingPayment(true);
+      // Keep an uncertain attempt across Maamuus re-scans too. The backend checks
+      // its original scan/index; changing an offer must not silently start a new debit.
       const key = 'al-islaam-waafi-attempt:' + JSON.stringify([selectedProvider, packageData?.id, paymentNumber, receiverNumber, scheduledFor?.toISOString() || null]);
       let clientReference = '';
       try {
@@ -719,6 +721,8 @@ const PaymentProviders = () => {
           customer_phone: verifiedLoginPhone || normalizeSomaliPhone(offlineSenderPhone) || normalizeSomaliPhone(paymentNumber),
           package_id: packageData?.id, payment_provider_id: selectedProvider,
           scheduled_for: scheduledFor?.toISOString() || null,
+          ...(packageData?.discoveryLabel ? { discovery_id: packageData.discoveryId,
+            discovery_index: String(packageData.discoveryIndex), expected_price: packageData.discoveryPrice } : {}),
         });
         if (result.delivery_queued) localStorage.removeItem(key);
         setShowConfirmationScreen(false);
