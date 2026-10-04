@@ -8,7 +8,7 @@ const ts = require('typescript');
 function compile(path, dependencies) {
   const exports = {};
   const js = ts.transpileModule(fs.readFileSync(path, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  vm.runInNewContext(js, { exports, require: name => dependencies[name], console, localStorage: dependencies.localStorage, crypto: globalThis.crypto, Request, Response, AbortSignal, Deno: { env: { get: () => 'test' } }, fetch: dependencies.fetch, setTimeout, Date });
+  vm.runInNewContext(js, { exports, require: name => dependencies[name], console, localStorage: dependencies.localStorage, crypto: globalThis.crypto, Request, Response, AbortSignal, Deno: { env: { get: () => 'test' } }, fetch: dependencies.fetch, setTimeout: dependencies.setTimeout || setTimeout, Date });
   return exports;
 }
 const packageId='11111111-1111-4111-8111-111111111111';
@@ -51,7 +51,7 @@ function harness(reply, options = {}) {
     'https://esm.sh/@supabase/supabase-js@2.57.4': {createClient:()=>admin},
     './delivery.ts': helpers,
     './errors.ts': compile('supabase/functions/waafipay-purchase/errors.ts', {}),
-    fetch: async (_url,init) => {calls++; charged=JSON.parse(init.body); if(reply instanceof Error)throw reply; return Response.json(reply);},
+    fetch: async (_url,init) => {calls++; charged=JSON.parse(init.body); if(reply instanceof Error)throw reply; return Response.json(typeof reply === 'function' ? await reply() : reply);},
   });
   return { backend, txs, orders, queue, get calls(){return calls;}, get charged(){return charged;},
     async pay(overrides={}) {
@@ -103,6 +103,59 @@ test('dynamic root packages are refused before any API charge',async()=>{
 test('reference cannot be reused for a different receiver',async()=>{
   const h=harness(approved);await h.pay();const r=await h.pay({receiver_phone:'682222222'});
   assert.equal(r.status,409);assert.equal(h.calls,1);
+});
+test('status recovery never charges or creates a delivery, including missing and unknown references', async()=>{
+  const h=harness(approved);
+  assert.equal((await h.pay({action:'status'})).body.payment_status,'not_found');
+  assert.equal(h.calls,0);assert.equal(h.txs.length,0);
+  await h.pay();
+  const status=await h.pay({action:'status'});
+  assert.equal(status.body.payment_approved,true);assert.equal(status.body.delivery_queued,true);
+  assert.equal(h.calls,1);assert.equal(h.orders.length,1);assert.equal(h.queue.length,1);
+  assert.equal((await h.pay({action:'status',receiver_phone:'682222222'})).body.error,'reference_mismatch');
+  const unknown=harness(new Error('lost provider response'));await unknown.pay();
+  assert.equal((await unknown.pay({action:'status'})).body.payment_status,'unknown');
+  assert.equal(unknown.calls,1);assert.equal(unknown.orders.length,0);
+});
+test('a pending purchase can be checked while the wallet PIN response is still outstanding',async()=>{
+  let finish;const waiting=new Promise(resolve=>{finish=resolve;});
+  const h=harness(()=>waiting);const purchase=h.pay();
+  while(!h.calls) await new Promise(resolve=>setTimeout(resolve,0));
+  assert.equal((await h.pay({action:'status'})).body.payment_status,'processing');
+  assert.equal(h.calls,1);assert.equal(h.orders.length,0);
+  finish(approved);await purchase;
+  assert.equal((await h.pay({action:'status'})).body.payment_approved,true);
+  assert.equal(h.calls,1);
+});
+test('frontend recovers a lost approved response by reading status, without purchasing twice',async()=>{
+  const bodies=[];
+  const lib=compile('src/lib/waafiPay.ts', {'@/integrations/supabase/client':{supabase:{functions:{invoke:async(_name,{body})=>{
+    bodies.push(body);
+    if(!body.action) throw new Error('network lost after payment');
+    return {data:{payment_approved:true,delivery_queued:true,order_id:'order',reference_id:'WP123'},error:null};
+  }}}}});
+  const input={client_reference:clientRef};const result=await lib.purchaseWithWaafiPay(input);
+  assert.equal(result.payment_approved,true);assert.equal(bodies.length,2);
+  assert.equal(bodies[1].action,'status');assert.equal(bodies[1].client_reference,clientRef);
+});
+test('status recovery preserves a definite rejection instead of showing an unknown payment',async()=>{
+  const lib=compile('src/lib/waafiPay.ts', {'@/integrations/supabase/client':{supabase:{functions:{invoke:async(_name,{body})=>{
+    if(!body.action) return {data:null,error:new Error('lost')};
+    return {data:{error:'user_cancelled',title:'Waa la diiday',message:'Lacagta ma bixin.',safe_to_retry:true},error:null};
+  }}}}});
+  await assert.rejects(lib.purchaseWithWaafiPay({}),e=>e.code==='user_cancelled' && e.safeToRetry===true);
+});
+test('frontend waits for a processing attempt and never converts status polling into another debit',async()=>{
+  let purchases=0;let statuses=0;
+  const lib=compile('src/lib/waafiPay.ts', {setTimeout:resolve=>resolve(),
+    '@/integrations/supabase/client':{supabase:{functions:{invoke:async(_name,{body})=>{
+      if(!body.action) {purchases++;return {data:null,error:new Error('lost')};}
+      statuses++;
+      return {data:statuses<3 ? {payment_status:'processing',payment_approved:false} :
+        {payment_approved:true,delivery_queued:true,reference_id:'WP123'},error:null};
+    }}}}});
+  assert.equal((await lib.purchaseWithWaafiPay({client_reference:clientRef})).payment_approved,true);
+  assert.equal(purchases,1);assert.equal(statuses,3);
 });
 test('frontend resolves API before both dialer paths and hides its USSD confirmation',()=>{
   const page=fs.readFileSync('src/pages/PaymentProviders.tsx','utf8');

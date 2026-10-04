@@ -50,6 +50,28 @@ serve(async req => {
         transaction.package_id !== packageId || transaction.payment_provider_id !== paymentProviderId)) {
       return json({ error: 'reference_mismatch' }, 409);
     }
+    // Status recovery must never call API_PURCHASE, create an order or queue a
+    // delivery. The opaque checkout reference and its original fields must match.
+    if (body.action === 'status') {
+      if (!transaction) return json({ payment_status: 'not_found', payment_approved: false }, 202);
+      if (transaction.status === 'processing') return json({ payment_status: 'processing', payment_approved: false,
+        reference_id: transaction.reference_id }, 202);
+      if (transaction.status !== 'approved') return json({
+        ...paymentFailure({ responseCode: transaction.response_code, responseMsg: transaction.response_message,
+          params: { state: transaction.waafi_state } }, transaction.status),
+        payment_status: transaction.status, reference_id: transaction.reference_id,
+      }, 409);
+      let deliveryStatus: string | undefined;
+      if (transaction.order_id) {
+        const { data: order, error: orderError } = await admin.from('orders').select('delivery_status').eq('id', transaction.order_id).single();
+        if (orderError) throw orderError;
+        deliveryStatus = order?.delivery_status;
+      }
+      const queued = transaction.order_id ? await hasActiveDelivery(admin, transaction.order_id) : false;
+      return json({ payment_status: 'approved', payment_approved: true, delivery_queued: queued,
+        delivery_status: deliveryStatus, order_id: transaction.order_id || undefined, reference_id: transaction.reference_id });
+    }
+    if (body.action && body.action !== 'purchase') return json({ error: 'invalid_action' }, 422);
     if (transaction && transaction.status !== 'approved') {
       return json({ ...paymentFailure({ responseCode: transaction.response_code, responseMsg: transaction.response_message, params: { state: transaction.waafi_state } }, transaction.status), reference_id: transaction.reference_id }, 409);
     }
@@ -109,7 +131,9 @@ serve(async req => {
       let response: any;
       try {
         const result = await fetch(credentials.environment === 'sandbox' ? 'https://sandbox.waafipay.com/asm' : 'https://api.waafipay.net/asm', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(45000),
+          // Leave time for the wallet PIN prompt while staying below the gateway's
+          // 150-second request timeout. A lost response still remains unconfirmed.
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(120000),
           body: JSON.stringify({ schemaVersion: '1.0', requestId, timestamp: new Date().toISOString().replace('T', ' ').replace('Z', ''),
             channelName: 'WEB', serviceName: 'API_PURCHASE', serviceParams: {
               merchantUid: credentials.merchant_uid, apiUserId: credentials.api_user_id, apiKey: credentials.api_key,
