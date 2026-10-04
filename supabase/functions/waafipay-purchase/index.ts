@@ -37,19 +37,25 @@ serve(async req => {
     const ref = String(body.client_reference || '');
     const payer = normalizePhone(body.payer_phone);
     const receiver = normalizePhone(body.receiver_phone);
+    const requestedCustomer = body.customer_phone == null ? null : normalizePhone(body.customer_phone);
     const packageId = String(body.package_id || '');
     const paymentProviderId = String(body.payment_provider_id || '');
     if (!UUID.test(ref) || !UUID.test(packageId) || !UUID.test(paymentProviderId) ||
-        !/^\d{9}$/.test(payer) || !/^\d{7,9}$/.test(receiver)) {
+        !/^\d{9}$/.test(payer) || !/^\d{7,9}$/.test(receiver) ||
+        (requestedCustomer !== null && !/^\d{9}$/.test(requestedCustomer))) {
       return json({ error: 'invalid_purchase_fields', message: 'Hubi lambarada iyo xirmada.' }, 422);
     }
     const { data: existing, error: lookupError } = await admin.from('waafipay_transactions').select('*').eq('client_reference', ref).maybeSingle();
     if (lookupError) throw lookupError;
     transaction = existing;
+    const storedCustomer = transaction?.raw_response?.request_context?.customer_phone;
     if (transaction && (transaction.payer_phone !== payer || transaction.receiver_phone !== receiver ||
-        transaction.package_id !== packageId || transaction.payment_provider_id !== paymentProviderId)) {
+        transaction.package_id !== packageId || transaction.payment_provider_id !== paymentProviderId ||
+        (storedCustomer && requestedCustomer !== null && storedCustomer !== requestedCustomer))) {
       return json({ error: 'reference_mismatch' }, 409);
     }
+    // Keep the app account distinct from the wallet payer; old clients still use payer.
+    const customer = storedCustomer || requestedCustomer || payer;
     // Status recovery must never call API_PURCHASE, create an order or queue a
     // delivery. The opaque checkout reference and its original fields must match.
     if (body.action === 'status') {
@@ -123,7 +129,7 @@ serve(async req => {
       const { data: inserted, error: insertError } = await admin.from('waafipay_transactions').insert({
         client_reference: ref, reference_id: reference, request_id: requestId, payer_phone: payer, receiver_phone: receiver,
         package_id: packageId, payment_provider_id: paymentProviderId, amount, currency: 'USD',
-        environment: credentials.environment, status: 'processing', raw_response: { request_context: { scheduled_for: scheduledFor } },
+        environment: credentials.environment, status: 'processing', raw_response: { request_context: { scheduled_for: scheduledFor, customer_phone: customer } },
       }).select('*').single();
       if (insertError?.code === '23505') return json({ error: 'payment_status_unknown', message: unknownMessage }, 409);
       if (insertError) throw insertError;
@@ -157,7 +163,7 @@ serve(async req => {
         // Store only non-secret fields; never store an upstream credentials echo.
         raw_response: { responseCode: response.responseCode, responseMsg: response.responseMsg,
           params: { state: response.params?.state, transactionId: response.params?.transactionId, txAmount: response.params?.txAmount },
-          request_context: { scheduled_for: scheduledFor } },
+          request_context: { scheduled_for: scheduledFor, customer_phone: customer } },
         approved_at: status === 'approved' ? new Date().toISOString() : null, updated_at: new Date().toISOString(),
       }).eq('id', transaction.id).select('*').single();
       if (updateError) throw updateError;
@@ -180,7 +186,7 @@ serve(async req => {
       order = existingOrder;
       if (!order) {
         const { data, error } = await admin.from('orders').insert({
-          customer_phone: payer, sender_phone: payer, receiver_phone: receiver, provider_id: pkg.provider_id,
+          customer_phone: customer, sender_phone: payer, receiver_phone: receiver, provider_id: pkg.provider_id,
           package_id: pkg.id, package_name: pkg.package_name, data_amount: pkg.data_amount, selling_price: amount,
           cost_price: Number(pkg.cost_price || 0), payment_provider_id: paymentProviderId, payment_source: 'waafipay',
           status: 'completed', delivery_status: 'pending', tx_id: txId, scheduled_for: scheduledFor,

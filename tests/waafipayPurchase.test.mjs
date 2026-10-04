@@ -62,6 +62,39 @@ function harness(reply, options = {}) {
 }
 const approved={responseCode:'2001',responseMsg:'RCS_SUCCESS',params:{state:'APPROVED',transactionId:'123456',txAmount:'1.25'}};
 
+test('logged-in account owns a scheduled purchase funded by a different wallet', async()=>{
+  const h=harness(approved);
+  const when=new Date(Date.now()+3600000).toISOString();
+  await h.pay({customer_phone:'+252 619 535 029',scheduled_for:when});
+  assert.equal(h.orders[0].customer_phone,'619535029');
+  assert.equal(h.orders[0].sender_phone,'611111111');
+  assert.equal(h.orders[0].receiver_phone,'681111111');
+  assert.equal(h.txs[0].raw_response.request_context.customer_phone,'619535029');
+  assert.equal(h.txs[0].raw_response.request_context.scheduled_for,when);
+  const status=await h.pay({action:'status',customer_phone:'0619535029'});
+  assert.equal(status.body.order_id,h.orders[0].id);
+  assert.equal(h.calls,1);assert.equal(h.queue.length,1);
+});
+test('a checkout reference cannot change app owner on purchase or status recovery', async()=>{
+  const h=harness(approved);await h.pay({customer_phone:'619535029'});
+  for(const action of ['purchase','status']) {
+    const r=await h.pay({action,customer_phone:'619999999'});
+    assert.equal(r.status,409);assert.equal(r.body.error,'reference_mismatch');
+  }
+  // Older clients can still recover their original attempt without the new field.
+  assert.equal((await h.pay({action:'status'})).body.payment_approved,true);
+  assert.equal(h.orders[0].customer_phone,'619535029');
+  assert.equal(h.calls,1);assert.equal(h.orders.length,1);assert.equal(h.queue.length,1);
+});
+test('legacy clients retain payer ownership and invalid app phones never charge', async()=>{
+  const h=harness(approved);await h.pay();
+  assert.equal(h.orders[0].customer_phone,'611111111');
+  for(const customer_phone of ['bad','', '1234']) {
+    const invalid=harness(approved);const r=await invalid.pay({customer_phone});
+    assert.equal(r.status,422);assert.equal(invalid.calls,0);assert.equal(invalid.orders.length,0);
+  }
+});
+
 test('API and offline routing never fall back to USSD',()=>{
   const lib=compile('src/lib/waafiPay.ts', {'@/integrations/supabase/client':{}});
   assert.equal(lib.paymentRoute({provider_name:' WaafiPay '},true),'api');

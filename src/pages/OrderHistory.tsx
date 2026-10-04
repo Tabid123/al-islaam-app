@@ -11,6 +11,7 @@ import { BottomNavigation } from '@/components/BottomNavigation';
 import { showBannerAd, hideBannerAd } from '@/services/admob';
 import { generateInvoiceImage } from '@/utils/invoiceGenerator';
 import { downloadBlobInBrowser } from '@/utils/downloadFile';
+import { fetchCustomerOrders, getCustomerPhones, normalizeSomaliPhone, watchCustomerOrders } from '@/lib/customerOrders';
 
 // Helper function to get invoice image - uses cached URL if available, otherwise generates on-demand
 const getInvoiceBlob = async (order: any): Promise<Blob> => {
@@ -30,7 +31,6 @@ const getInvoiceBlob = async (order: any): Promise<Blob> => {
   return generateInvoiceImage(order);
 };
 
-const normalizeSomaliPhone = (phone?: string | null) => (phone || '').replace(/^\+252/, '').trim();
 
 const OrderHistory = () => {
   const navigate = useNavigate();
@@ -152,45 +152,21 @@ const OrderHistory = () => {
 
   useEffect(() => {
     const fetchOrderHistory = async () => {
-      const verifiedPhone = localStorage.getItem('verifiedPhone');
-      const offlineSenderPhone = localStorage.getItem('offlineSenderPhone');
-      
-      if (!verifiedPhone && !offlineSenderPhone) {
+      const phones = getCustomerPhones();
+      if (!phones.length) {
+        setOrderHistory([]);
         setLoading(false);
         return;
       }
       try {
-        // Get all possible phone numbers to search for
-        const phonesToSearch = [...new Set([
-          normalizeSomaliPhone(verifiedPhone),
-          normalizeSomaliPhone(offlineSenderPhone)
-        ].filter(Boolean))];
-
-        const [orderChunks, providerResult] = await Promise.all([
-          Promise.all(
-            phonesToSearch.map(async (phone) => {
-              const { data, error } = await (supabase as any).rpc('get_customer_order_history', {
-                customer_phone_number: phone
-              });
-
-              if (error) throw error;
-              return data || [];
-            })
-          ),
-          // History RPC returns provider_id. Resolve its public name and logo,
-          // including companies disabled for new purchases but present in history.
+        const [ordersData, providerResult] = await Promise.all([
+          fetchCustomerOrders(phones),
+          // Include companies disabled for new purchases but present in history.
           supabase.from('providers_config').select('id,provider_name,provider_logo'),
         ]);
         if (providerResult.error) throw providerResult.error;
         const providersById = new Map((providerResult.data || []).map(provider => [provider.id, provider]));
 
-        const ordersData = [...new Map(
-          orderChunks
-            .flat()
-            .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-            .map((order: any) => [order.id, order])
-        ).values()];
-        
         const formattedHistory = ordersData.map((order: any) => {
           const orderDate = new Date(order.created_at);
           const provider = providersById.get(order.provider_id);
@@ -266,36 +242,7 @@ const OrderHistory = () => {
     };
     fetchOrderHistory();
     
-    const verifiedPhone = localStorage.getItem('verifiedPhone');
-    const offlineSenderPhone = localStorage.getItem('offlineSenderPhone');
-    
-    if (!verifiedPhone && !offlineSenderPhone) return;
-    
-    const phonesToListen: string[] = [];
-    if (verifiedPhone) {
-      phonesToListen.push(normalizeSomaliPhone(verifiedPhone));
-    }
-    if (offlineSenderPhone) {
-      phonesToListen.push(normalizeSomaliPhone(offlineSenderPhone));
-    }
-    
-    const channel = supabase.channel('order-changes').on('postgres_changes', {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'orders'
-    }, (payload) => {
-      // Check if the change is relevant to any of our phone numbers
-      const order = payload.new as any;
-      if (order && (
-        phonesToListen.includes(normalizeSomaliPhone(order.customer_phone)) || 
-        phonesToListen.includes(normalizeSomaliPhone(order.sender_phone))
-      )) {
-        fetchOrderHistory();
-      }
-    }).subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return watchCustomerOrders('order-history-changes', fetchOrderHistory);
   }, [toast]);
   return <div className="min-h-screen bg-background pb-24">
       {/* Header with safe-area padding for Android 12+ */}

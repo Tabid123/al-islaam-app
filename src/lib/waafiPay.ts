@@ -11,7 +11,7 @@ export function paymentRoute(provider: { provider_name?: string; payment_mode?: 
 }
 
 type PurchaseInput = {
-  client_reference: string; payer_phone: string; receiver_phone: string;
+  client_reference: string; payer_phone: string; receiver_phone: string; customer_phone?: string;
   package_id: string; payment_provider_id: string; scheduled_for: string | null;
 };
 

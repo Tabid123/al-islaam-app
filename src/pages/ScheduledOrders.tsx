@@ -7,8 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { BottomNavigation } from '@/components/BottomNavigation';
 
-const normalizeSomaliPhone = (phone?: string | null) =>
-  (phone || '').replace(/^\+252/, '').trim();
+import { fetchCustomerOrders, getCustomerPhones, normalizeSomaliPhone, watchCustomerOrders } from '@/lib/customerOrders';
 
 const ScheduledOrders: React.FC = () => {
   const navigate = useNavigate();
@@ -18,12 +17,7 @@ const ScheduledOrders: React.FC = () => {
   // filter removed — show all scheduled orders
 
   const load = useCallback(async () => {
-    const verifiedPhone = localStorage.getItem('verifiedPhone');
-    const offlineSenderPhone = localStorage.getItem('offlineSenderPhone');
-    const phones = [...new Set([
-      normalizeSomaliPhone(verifiedPhone),
-      normalizeSomaliPhone(offlineSenderPhone),
-    ].filter(Boolean))];
+    const phones = getCustomerPhones();
 
     if (phones.length === 0) {
       setOrders([]);
@@ -33,19 +27,7 @@ const ScheduledOrders: React.FC = () => {
 
     setLoading(true);
     try {
-      const results = await Promise.all(
-        phones.map((p) =>
-          (supabase as any).rpc('get_customer_scheduled_orders', { customer_phone_number: p })
-        )
-      );
-      const firstError = results.find((r: any) => r.error)?.error;
-      if (firstError) throw firstError;
-      const merged = [...new Map(
-        results.flatMap((r: any) => r.data || []).map((o: any) => [o.id, o])
-      ).values()].sort(
-        (a: any, b: any) => new Date(a.scheduled_for).getTime() - new Date(b.scheduled_for).getTime()
-      );
-      setOrders(merged);
+      setOrders(await fetchCustomerOrders(phones, true));
     } catch (err: any) {
       console.error(err);
       toast({ title: 'Khalad', description: 'Lama soo dejin karin', variant: 'destructive' });
@@ -54,7 +36,10 @@ const ScheduledOrders: React.FC = () => {
     }
   }, [toast]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+    return watchCustomerOrders('scheduled-order-changes', load);
+  }, [load]);
 
   const now = new Date();
   const upcoming = orders.filter(

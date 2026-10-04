@@ -26,6 +26,7 @@ import { useConnectivity } from '@/contexts/ConnectivityContext';
 import { Capacitor } from '@/shims/capacitor';
 import { activePaymentProviders, fetchActivePaymentProviders, readCachedPaymentProviders, PAYMENT_QUERY_KEY } from '@/lib/paymentProviders';
 import { isApiPayment, paymentRoute, purchaseWithWaafiPay } from '@/lib/waafiPay';
+import { normalizeSomaliPhone } from '@/lib/customerOrders';
 const CONFIRMATION_VOICE_URL = '/confirmation-voice.mp3';
 interface PaymentProvider {
   id: string;
@@ -369,10 +370,7 @@ const PaymentProviders = () => {
   const offlineReceiverPhone = localStorage.getItem('offlineReceiverPhone') || '';
   // App-verified login phone (without +252 prefix). Used as default receiver when it matches the package's provider.
   const verifiedLoginPhone = React.useMemo(() => {
-    const raw = localStorage.getItem('verifiedPhone') || '';
-    const digits = raw.replace(/\D/g, '');
-    // Strip country code 252 if present
-    return digits.startsWith('252') ? digits.substring(3) : digits;
+    return normalizeSomaliPhone(localStorage.getItem('verifiedPhone'));
   }, []);
 
   // Set receiver prefix when provider is loaded
@@ -718,6 +716,7 @@ const PaymentProviders = () => {
         const result = await purchaseWithWaafiPay({
           client_reference: clientReference,
           payer_phone: paymentNumber, receiver_phone: receiverNumber,
+          customer_phone: verifiedLoginPhone || normalizeSomaliPhone(offlineSenderPhone) || normalizeSomaliPhone(paymentNumber),
           package_id: packageData?.id, payment_provider_id: selectedProvider,
           scheduled_for: scheduledFor?.toISOString() || null,
         });
