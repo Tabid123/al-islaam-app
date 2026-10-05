@@ -5,6 +5,11 @@ export const Route = createFileRoute('/api/public/somlink-status')({
   server: {
     handlers: {
       GET: async () => Response.json({
+        somlink_configured: Boolean(process.env.SOMLINK_WALLET_PHONE && process.env.SOMLINK_PASSWORD),
+        database_configured: Boolean(
+          (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) &&
+          (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEYS)
+        ),
         configured: Boolean(
           process.env.SOMLINK_WALLET_PHONE && process.env.SOMLINK_PASSWORD &&
           (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) &&
