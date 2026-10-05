@@ -101,6 +101,7 @@ const menuGroups: MenuItem[] = [
     children: [
       { label: 'Payment Settings', labelSo: 'Payment', icon: CreditCard, path: '/simple-admin/payment-settings' },
       { label: 'WaafiPay API', labelSo: 'WaafiPay API', icon: ShieldCheck, path: '/simple-admin/waafipay-api' },
+      { label: 'eDahab API', labelSo: 'eDahab API', icon: ShieldCheck, path: '/simple-admin/edahab-api' },
       { label: 'Offline Payment', labelSo: 'Offline Payment', icon: WifiOff, path: '/simple-admin/offline-payment' },
       
       { label: 'Banners', labelSo: 'Banners', icon: ImageIcon, path: '/simple-admin/banners' },
