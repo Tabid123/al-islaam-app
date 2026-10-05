@@ -1,3 +1,4 @@
+// Production deploy trigger: 2026-10-05T16:11+03:00
 // Cloudflare production configuration for Al-islaam TanStack/Nitro build
 {
   "$schema": "node_modules/wrangler/config-schema.json",
