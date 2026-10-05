@@ -26,6 +26,7 @@ import { useConnectivity } from '@/contexts/ConnectivityContext';
 import { Capacitor } from '@/shims/capacitor';
 import { activePaymentProviders, fetchActivePaymentProviders, readCachedPaymentProviders, PAYMENT_QUERY_KEY } from '@/lib/paymentProviders';
 import { isApiPayment, paymentRoute, purchaseWithWaafiPay } from '@/lib/waafiPay';
+import { purchaseWithEdahab } from '@/lib/edahabPay';
 import { normalizeSomaliPhone } from '@/lib/customerOrders';
 const CONFIRMATION_VOICE_URL = '/confirmation-voice.mp3';
 interface PaymentProvider {
@@ -687,7 +688,7 @@ const PaymentProviders = () => {
       }
     }
     const selectedPaymentProvider = currentProviders.find(p => p.id === selectedProvider);
-    if (!selectedPaymentProvider || isApiPayment(previousProvider) !== isApiPayment(selectedPaymentProvider)) {
+    if (!selectedPaymentProvider || previousProvider?.payment_mode !== selectedPaymentProvider?.payment_mode) {
       setShowConfirmationScreen(false);
       setShowPaymentModal(false);
       toast({ title: 'Habka lacag-bixinta waa la beddelay. Mar kale dooro.', variant: 'destructive' });
@@ -709,21 +710,26 @@ const PaymentProviders = () => {
       setIsProcessingPayment(true);
       // Keep an uncertain attempt across Maamuus re-scans too. The backend checks
       // its original scan/index; changing an offer must not silently start a new debit.
-      const key = 'al-islaam-waafi-attempt:' + JSON.stringify([selectedProvider, packageData?.id, paymentNumber, receiverNumber, scheduledFor?.toISOString() || null]);
+      const key = 'al-islaam-api-attempt:' + JSON.stringify([selectedPaymentProvider.payment_mode, selectedProvider, packageData?.id, paymentNumber, receiverNumber, scheduledFor?.toISOString() || null]);
       let clientReference = '';
       try {
         clientReference = localStorage.getItem(key) || crypto.randomUUID();
         // Persist before sending, so a reload/network failure cannot charge twice.
         localStorage.setItem(key, clientReference);
-        const result = await purchaseWithWaafiPay({
+        const purchaseInput = {
           client_reference: clientReference,
           payer_phone: paymentNumber, receiver_phone: receiverNumber,
           customer_phone: verifiedLoginPhone || normalizeSomaliPhone(offlineSenderPhone) || normalizeSomaliPhone(paymentNumber),
           package_id: packageData?.id, payment_provider_id: selectedProvider,
           scheduled_for: scheduledFor?.toISOString() || null,
-          ...(packageData?.discoveryLabel ? { discovery_id: packageData.discoveryId,
-            discovery_index: String(packageData.discoveryIndex), expected_price: packageData.discoveryPrice } : {}),
-        });
+        };
+        const result = selectedPaymentProvider.payment_mode === 'edahab_api'
+          ? await purchaseWithEdahab(purchaseInput)
+          : await purchaseWithWaafiPay({
+              ...purchaseInput,
+              ...(packageData?.discoveryLabel ? { discovery_id: packageData.discoveryId,
+                discovery_index: String(packageData.discoveryIndex), expected_price: packageData.discoveryPrice } : {}),
+            });
         if (result.delivery_queued) localStorage.removeItem(key);
         setShowConfirmationScreen(false);
         queryClient.invalidateQueries({ queryKey: ['orders'] });
@@ -1212,7 +1218,7 @@ return <div className="min-h-screen bg-[#efefef] pb-24">
 
             {/* USSD applies only to the selected USSD payment method. */}
             {selectedIsApi ? <div className="rounded-lg border border-border bg-muted p-3 text-center text-sm">
-              Xaqiiji lacag-bixinta WaafiPay ee taleefankaaga.
+              Xaqiiji lacag-bixinta {paymentProviders.find(p => p.id === selectedProvider)?.provider_name || 'API'} ee taleefankaaga.
             </div> : <div className="flex items-center justify-between bg-muted rounded-lg p-3 border border-border">
               <code className="text-lg font-bold text-primary select-all">
                 {ussdCodeForDisplay}
