@@ -1,10 +1,15 @@
-// Deploy trigger: 2026-10-05T15:56+03:00
-// Cloudflare Worker preview configuration
+// Cloudflare production configuration for Al-islaam TanStack/Nitro build
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "al-islaam-app",
-  "compatibility_date": "2025-09-02",
+  "main": ".output/server/index.mjs",
+  "compatibility_date": "2026-10-05",
   "compatibility_flags": ["nodejs_compat"],
-  "preview_urls": true,
-  "previews": {}
+  "assets": {
+    "directory": ".output/public"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "preview_urls": true
 }
