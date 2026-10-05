@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export function isApiPayment(provider: { provider_name?: string; payment_mode?: string } | null | undefined): boolean {
-  if (provider?.payment_mode) return provider.payment_mode === 'waafipay_api';
+  if (provider?.payment_mode) return ['waafipay_api', 'edahab_api'].includes(provider.payment_mode);
   return String(provider?.provider_name || '').trim().toLowerCase() === 'waafipay';
 }
 
