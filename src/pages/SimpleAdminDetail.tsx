@@ -65,6 +65,7 @@ const SendNotification = lazyRetry(() => import('@/components/admin/SendNotifica
 const AppSettings = lazyRetry(() => import('@/components/admin/AppSettings'));
 const OfflinePaymentSettings = lazyRetry(() => import('@/components/admin/OfflinePaymentSettings'));
 const WaafiPayIntegrationSettings = lazyRetry(() => import('@/components/admin/WaafiPayIntegrationSettings'));
+const EdahabIntegrationSettings = lazyRetry(() => import('@/components/admin/EdahabIntegrationSettings'));
 
 const AutoTopUpSettings = lazyRetry(() => import('@/components/admin/AutoTopUpSettings').then(m => ({ default: m.AutoTopUpSettings })));
 const AuditLogViewer = lazyRetry(() => import('@/components/admin/AuditLogViewer').then(m => ({ default: m.AuditLogViewer })));
@@ -103,6 +104,7 @@ const DETAIL_CONFIGS: Record<string, DetailConfig> = {
   banners: { title: 'Banners', titleSo: 'Banners', headerBg: 'from-green-600 to-green-800' },
   'payment-settings': { title: 'Payment Providers', titleSo: 'Payment Settings', headerBg: 'from-violet-500 to-violet-700' },
   'waafipay-api': { title: 'WaafiPay API', titleSo: 'WaafiPay API', headerBg: 'from-blue-600 to-cyan-700' },
+  'edahab-api': { title: 'eDahab API', titleSo: 'eDahab API', headerBg: 'from-green-600 to-emerald-700' },
   'system-codes': { title: 'System Codes', titleSo: 'USSD Codes', headerBg: 'from-indigo-600 to-indigo-800' },
   apps: { title: 'Apps', titleSo: 'Apps', headerBg: 'from-green-600 to-green-800' },
   'somlink-manual': { title: 'Somlink Manual Send', titleSo: 'Somlink Dir Manual', headerBg: 'from-green-600 to-green-800' },
@@ -210,6 +212,7 @@ const SimpleAdminDetail = () => {
       case 'app-settings': return <AppSettings />;
       case 'offline-payment': return <OfflinePaymentSettings />;
       case 'waafipay-api': return <WaafiPayIntegrationSettings />;
+      case 'edahab-api': return <EdahabIntegrationSettings />;
       
       case 'delivery-rules': return <PackageDeliveryRules />;
       case 'admin-management': return <AdminManagement />;
