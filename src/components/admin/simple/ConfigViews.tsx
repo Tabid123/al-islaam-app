@@ -1044,9 +1044,10 @@ export const PaymentSettingsCustomView = ({ isSo }: { isSo: boolean }) => {
             <select value={newPay.payment_mode} onChange={e => setNewPay(p => ({ ...p, payment_mode: e.target.value }))} className="w-full mt-1 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 border text-sm">
               <option value="ussd">{isSo ? 'Lambar / USSD' : 'Number / USSD'}</option>
               <option value="waafipay_api">WaafiPay API</option>
+              <option value="edahab_api">eDahab API</option>
             </select>
           </label>
-          <p className="text-xs text-muted-foreground">{newPay.payment_mode === 'waafipay_api' ? (isSo ? 'Lacagta waxaa lagu bixinayaa WaafiPay API-ga ku xiran dukaankan.' : 'Payments use the store’s configured WaafiPay account.') : (isSo ? 'Lambarka iyo USSD-ga hoose ayaa lacag-bixinta loo isticmaalaa.' : 'Payments use the number and USSD below.')}</p>
+          <p className="text-xs text-muted-foreground">{newPay.payment_mode === 'waafipay_api' ? (isSo ? 'Lacagta waxaa lagu bixinayaa WaafiPay API-ga ku xiran dukaankan.' : 'Payments use the store’s configured WaafiPay account.') : newPay.payment_mode === 'edahab_api' ? (isSo ? 'Lacagta waxaa lagu bixinayaa eDahab API-ga ku xiran dukaankan.' : 'Payments use the store’s configured eDahab API account.') : (isSo ? 'Lambarka iyo USSD-ga hoose ayaa lacag-bixinta loo isticmaalaa.' : 'Payments use the number and USSD below.')}</p>
           <input value={newPay.payment_number} onChange={e => setNewPay(p => ({...p, payment_number: e.target.value}))} placeholder="Payment Number" className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 border text-sm outline-none" />
           <div className="grid grid-cols-2 gap-2">
             <input value={newPay.commission_rate} onChange={e => setNewPay(p => ({...p, commission_rate: e.target.value}))} placeholder="Commission %" type="number" className="px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 border text-sm outline-none" />
