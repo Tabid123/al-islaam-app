@@ -47,6 +47,7 @@ export const DETAIL_PERMISSIONS: Record<string, string> = {
   apps: 'manage_settings',
   'somlink-manual': 'manage_settings',
   'waafipay-api': 'manage_settings',
+  'edahab-api': 'manage_settings',
 
   'admin-management': 'manage_admins',
   'audit-log': 'view_audit_log',
