@@ -7,7 +7,7 @@ export const PAYMENT_QUERY_KEY = ['paymentProvidersV2'] as const;
 
 export function activePaymentProviders(rows: unknown): Provider[] {
   if (!Array.isArray(rows)) return [];
-  return rows.filter(p => p?.is_active === true && ['ussd', 'waafipay_api'].includes(p.payment_mode));
+  return rows.filter(p => p?.is_active === true && ['ussd', 'waafipay_api', 'edahab_api'].includes(p.payment_mode));
 }
 
 export function readCachedPaymentProviders(): Provider[] {
