@@ -9,24 +9,25 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ApiPublicHooksUssdRouteImport } from './routes/api/public/hooks/ussd'
+import { Route as SplatRouteImport } from './routes/$'
+import { Route as ApiPublicSomlinkStatusRouteImport } from './routes/api/public/somlink-status'
 import { Route as ApiPublicHooksSomlinkDispatchRouteImport } from './routes/api/public/hooks/somlink-dispatch'
+import { Route as ApiPublicHooksUssdRouteImport } from './routes/api/public/hooks/ussd'
 
-const SplatRoute = SplatRouteImport.update({
-  id: '/$',
-  path: '/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicHooksUssdRoute = ApiPublicHooksUssdRouteImport.update({
-  id: '/api/public/hooks/ussd',
-  path: '/api/public/hooks/ussd',
+const SplatRoute = SplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSomlinkStatusRoute = ApiPublicSomlinkStatusRouteImport.update({
+  id: '/api/public/somlink-status',
+  path: '/api/public/somlink-status',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicHooksSomlinkDispatchRoute =
@@ -35,16 +36,23 @@ const ApiPublicHooksSomlinkDispatchRoute =
     path: '/api/public/hooks/somlink-dispatch',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksUssdRoute = ApiPublicHooksUssdRouteImport.update({
+  id: '/api/public/hooks/ussd',
+  path: '/api/public/hooks/ussd',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/api/public/somlink-status': typeof ApiPublicSomlinkStatusRoute
   '/api/public/hooks/somlink-dispatch': typeof ApiPublicHooksSomlinkDispatchRoute
   '/api/public/hooks/ussd': typeof ApiPublicHooksUssdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/api/public/somlink-status': typeof ApiPublicSomlinkStatusRoute
   '/api/public/hooks/somlink-dispatch': typeof ApiPublicHooksSomlinkDispatchRoute
   '/api/public/hooks/ussd': typeof ApiPublicHooksUssdRoute
 }
@@ -52,6 +60,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/api/public/somlink-status': typeof ApiPublicSomlinkStatusRoute
   '/api/public/hooks/somlink-dispatch': typeof ApiPublicHooksSomlinkDispatchRoute
   '/api/public/hooks/ussd': typeof ApiPublicHooksUssdRoute
 }
@@ -60,18 +69,21 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$'
+    | '/api/public/somlink-status'
     | '/api/public/hooks/somlink-dispatch'
     | '/api/public/hooks/ussd'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/$'
+    | '/api/public/somlink-status'
     | '/api/public/hooks/somlink-dispatch'
     | '/api/public/hooks/ussd'
   id:
     | '__root__'
     | '/'
     | '/$'
+    | '/api/public/somlink-status'
     | '/api/public/hooks/somlink-dispatch'
     | '/api/public/hooks/ussd'
   fileRoutesById: FileRoutesById
@@ -79,19 +91,13 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
+  ApiPublicSomlinkStatusRoute: typeof ApiPublicSomlinkStatusRoute
   ApiPublicHooksSomlinkDispatchRoute: typeof ApiPublicHooksSomlinkDispatchRoute
   ApiPublicHooksUssdRoute: typeof ApiPublicHooksUssdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/$': {
-      id: '/$'
-      path: '/$'
-      fullPath: '/$'
-      preLoaderRoute: typeof SplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -99,11 +105,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/ussd': {
-      id: '/api/public/hooks/ussd'
-      path: '/api/public/hooks/ussd'
-      fullPath: '/api/public/hooks/ussd'
-      preLoaderRoute: typeof ApiPublicHooksUssdRouteImport
+    '/$': {
+      id: '/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/somlink-status': {
+      id: '/api/public/somlink-status'
+      path: '/api/public/somlink-status'
+      fullPath: '/api/public/somlink-status'
+      preLoaderRoute: typeof ApiPublicSomlinkStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/somlink-dispatch': {
@@ -113,12 +126,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSomlinkDispatchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/ussd': {
+      id: '/api/public/hooks/ussd'
+      path: '/api/public/hooks/ussd'
+      fullPath: '/api/public/hooks/ussd'
+      preLoaderRoute: typeof ApiPublicHooksUssdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
+  ApiPublicSomlinkStatusRoute: ApiPublicSomlinkStatusRoute,
   ApiPublicHooksSomlinkDispatchRoute: ApiPublicHooksSomlinkDispatchRoute,
   ApiPublicHooksUssdRoute: ApiPublicHooksUssdRoute,
 }

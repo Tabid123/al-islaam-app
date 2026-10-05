@@ -100,7 +100,7 @@ serve(async req => {
     // An approved retry uses its server-side price/selection snapshot even if the menu has expired.
     if (transaction?.status === 'approved' && storedOffer) return await finalizeDiscovery();
     const [{ data: pkg, error: pkgError }, { data: provider, error: providerError }] = await Promise.all([
-      admin.from('data_packages_config').select('id,provider_id,category_id,package_name,data_amount,selling_price,cost_price,is_active,is_discovery_root,phone_prefix,ussd_code,menu1,menu2,sim_password').eq('id', packageId).maybeSingle(),
+      admin.from('data_packages_config').select('id,provider_id,category_id,package_name,data_amount,selling_price,cost_price,is_active,is_discovery_root,phone_prefix,ussd_code,menu1,menu2,sim_password,somlink_bundle_id').eq('id', packageId).maybeSingle(),
       admin.from('payment_providers_config').select('id,provider_name,is_active,payment_mode').eq('id', paymentProviderId).maybeSingle(),
     ]);
     if (pkgError || providerError) throw pkgError || providerError;
@@ -136,7 +136,22 @@ serve(async req => {
     if (!transaction && scheduledFor && (!Number.isFinite(Date.parse(scheduledFor)) || Date.parse(scheduledFor) < Date.now() + 60000)) return json({ error: 'invalid_schedule' }, 422);
     let instruction: any = null;
     let bundleCount = 0;
-    if (!discoveryOffer) {
+    const isSomlink = normalizeProviderSlug(providerConfig.provider_name) === 'somlink';
+    if (isSomlink) {
+      if (!Number.isInteger(Number(pkg.somlink_bundle_id)) || Number(pkg.somlink_bundle_id) <= 0 ||
+          !Number.isFinite(Number(pkg.cost_price)) || Number(pkg.cost_price) <= 0) {
+        return json({ error: 'somlink_package_not_configured', message: 'Xirmadan Somlink si sax ah looma diyaarin. Lacag lagama jarin.', safe_to_retry: true }, 409);
+      }
+      if (!transaction) {
+        let ready = false;
+        try {
+          const res = await fetch('https://alislaam.app/api/public/somlink-status', { signal: AbortSignal.timeout(10000) });
+          ready = res.ok && (await res.json()).configured === true;
+        } catch { /* Fail before charging if the delivery service cannot be reached. */ }
+        if (!ready) return json({ error: 'somlink_unavailable', message: 'Adeegga dirista Somlink hadda lama heli karo. Lacag lagama jarin.', safe_to_retry: true }, 409);
+      }
+    }
+    if (!discoveryOffer && !isSomlink) {
       instruction = await getDeliveryInstruction(admin, pkg.provider_id, pkg.id, pkg.category_id);
       const { count, error: bundleError } = await admin.from('package_delivery_rules').select('id', { head: true, count: 'exact' }).eq('source_package_id', pkg.id).eq('is_active', true);
       if (bundleError) throw bundleError;
@@ -244,7 +259,7 @@ serve(async req => {
       // Exactly one request owns delivery dispatch after approval, including concurrent retries.
       const { data: claim, error: claimError } = await admin.from('waafipay_transactions').update({ order_id: order.id }).eq('id', transaction.id).is('order_id', null).select('id');
       if (claimError) throw claimError;
-      if (claim?.length) {
+      if (claim?.length && !isSomlink) {
         const slug = normalizeProviderSlug(providerConfig.provider_name);
         const bundled = await queueDeliveryWithBundling(admin, order.id, pkg.id, pkg.provider_id, receiver, slug, scheduledFor);
         if (bundled === null) {
@@ -258,6 +273,13 @@ serve(async req => {
           if (error) throw error;
         }
       }
+    }
+    if (isSomlink) {
+      // The database locks the order: checkout retries and the dispatcher cannot
+      // create duplicate API deliveries. Existing failed attempts are never resent.
+      const { error } = await admin.rpc('enqueue_somlink_delivery', { p_order_id: order.id });
+      if (error) throw error;
+      // The scheduled dispatcher handles this durable queue, including future orders.
     }
     const queued = await hasActiveDelivery(admin, order.id);
     return json({ success: true, payment_approved: true, delivery_queued: queued, order_id: order.id, reference_id: transaction.reference_id });

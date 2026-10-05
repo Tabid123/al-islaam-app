@@ -17,9 +17,15 @@ const paymentId='33333333-3333-4333-8333-333333333333';
 const clientRef='44444444-4444-4444-8444-444444444444';
 const scanId='55555555-5555-4555-8555-555555555555';
 function harness(reply, options = {}) {
-  const txs = []; const orders = []; const queue = []; let calls = 0; let charged = null; let handler; let resolved = 0; let finalized = 0;
-  const pkg = { id: packageId, provider_id: providerId, category_id: null, package_name: 'Test', data_amount: '1GB', selling_price: 1.25, cost_price: 1, is_active: true, is_discovery_root: options.discovery || false, phone_prefix: '68', ussd_code: '*829#' };
+  const txs = []; const orders = []; const queue = []; let calls = 0; let charged = null; let handler; let resolved = 0; let finalized = 0; let readiness = 0;
+  const pkg = { id: packageId, provider_id: providerId, category_id: null, package_name: 'Test', data_amount: '1GB', selling_price: 1.25, cost_price: 1, is_active: true, is_discovery_root: options.discovery || false, phone_prefix: '68', ussd_code: '*829#', somlink_bundle_id: options.somlink ? (options.bundleId ?? 20071) : null };
   const admin = { rpc: async (name,args) => {
+      if(name==='enqueue_somlink_delivery') {
+        const existing=queue.find(q=>q.order_id===args.p_order_id);
+        if(!existing) {const o=orders.find(o=>o.id===args.p_order_id);queue.push({id:crypto.randomUUID(),order_id:o.id,
+          receiver_phone:o.receiver_phone,provider_name:'Somlink',status:'pending',scheduled_at:o.scheduled_for});}
+        return {data:args.p_order_id,error:null};
+      }
       if(name==='waafipay_resolve_discovery_offer') {
         resolved++;
         if(options.resolveFailure) return {data:{success:false,error:options.resolveFailure}};
@@ -50,8 +56,8 @@ function harness(reply, options = {}) {
       function run(single) {
         let rows = table==='waafipay_transactions'?txs:table==='orders'?orders:table==='delivery_queue'?queue:
           table==='data_packages_config'?[pkg]:table==='payment_providers_config'?[{id:paymentId,provider_name:options.paymentName || 'EVC PLUS',payment_mode:options.paymentMode || 'waafipay_api',is_active:true}]:
-          table==='providers_config'?[{id:providerId,provider_name:'Somnet',is_active:true}]:
-          table==='delivery_instructions'?[{provider_id:providerId,package_id:null,category_id:null,code_template:'*829*{receiver_phone}*{cost_price}#',sim_password:''}]:[];
+          table==='providers_config'?[{id:providerId,provider_name:options.somlink?'Somlink':'Somnet',is_active:true}]:
+          table==='delivery_instructions' && !options.somlink?[{provider_id:providerId,package_id:null,category_id:null,code_template:'*829*{receiver_phone}*{cost_price}#',sim_password:''}]:[];
         if(action==='insert') {
           const record={id:crypto.randomUUID(),...values};
           if(table==='waafipay_transactions' && txs.some(t=>t.client_reference===record.client_reference)) return {data:null,error:{code:'23505'}};
@@ -70,9 +76,11 @@ function harness(reply, options = {}) {
     'https://esm.sh/@supabase/supabase-js@2.57.4': {createClient:()=>admin},
     './delivery.ts': helpers,
     './errors.ts': compile('supabase/functions/waafipay-purchase/errors.ts', {}),
-    fetch: async (_url,init) => {calls++; charged=JSON.parse(init.body); if(reply instanceof Error)throw reply; return Response.json(typeof reply === 'function' ? await reply() : reply);},
+    fetch: async (_url,init) => {
+      if(_url.endsWith('/somlink-status')) {readiness++;return Response.json({configured:options.somlinkReady!==false});}
+      calls++; charged=JSON.parse(init.body); if(reply instanceof Error)throw reply; return Response.json(typeof reply === 'function' ? await reply() : reply);},
   });
-  return { backend, txs, orders, queue, get calls(){return calls;}, get resolved(){return resolved;}, get finalized(){return finalized;}, get charged(){return charged;},
+  return { backend, txs, orders, queue, get readiness(){return readiness;}, get calls(){return calls;}, get resolved(){return resolved;}, get finalized(){return finalized;}, get charged(){return charged;},
     async pay(overrides={}) {
       const response=await handler(new Request('https://example.test', {method:'POST',headers:{Authorization:'Bearer test', 'Content-Type':'application/json'}, body:JSON.stringify({client_reference:clientRef,payer_phone:'+252611111111',receiver_phone:'681111111',package_id:packageId,payment_provider_id:paymentId,...overrides})}));
       return {status:response.status,body:await response.json()};
@@ -325,4 +333,39 @@ test('Maamuus decline and unknown responses never finalize delivery',async()=>{
     const h=harness(reply,{discovery:true});await h.pay(discoveryInput);
     assert.equal(h.finalized,0);assert.equal(h.orders.length,0);assert.equal(h.queue.length,0);
   }
+});
+
+
+test('Somlink checkout uses the API queue without any USSD instruction',async()=>{
+  const h=harness(approved,{somlink:true});
+  const r=await h.pay();
+  assert.equal(r.body.payment_approved,true);assert.equal(r.body.delivery_queued,true);
+  assert.equal(h.readiness,1);assert.equal(h.calls,1);
+  assert.equal(h.queue[0].provider_name,'Somlink');assert.equal(h.queue[0].ussd_code,undefined);
+  assert.equal(h.queue[0].receiver_phone,'681111111');
+  await h.pay();await h.pay({action:'status'});
+  assert.equal(h.calls,1);assert.equal(h.readiness,1);assert.equal(h.queue.length,1);
+});
+test('Somlink unavailable or missing bundle is rejected before charging',async()=>{
+  for(const opts of [{somlinkReady:false},{bundleId:0},{bundleId:-1}]) {
+    const h=harness(approved,{somlink:true,...opts});const r=await h.pay();
+    assert.equal(r.status,409);assert.equal(r.body.safe_to_retry,true);
+    assert.equal(h.calls,0);assert.equal(h.txs.length,0);assert.equal(h.queue.length,0);
+  }
+});
+test('Somlink future orders preserve their due time in the API queue',async()=>{
+  const when=new Date(Date.now()+3600000).toISOString();
+  const h=harness(approved,{somlink:true});const r=await h.pay({scheduled_for:when});
+  assert.equal(r.body.delivery_queued,true);assert.equal(h.queue[0].status,'pending');
+  assert.equal(h.queue[0].scheduled_at,when);assert.equal(h.calls,1);
+});
+test('declined or uncertain Somlink payment cannot enqueue a delivery',async()=>{
+  for(const reply of [{responseCode:'5310',params:{state:'DECLINED'}},new Error('lost response')]) {
+    const h=harness(reply,{somlink:true});await h.pay();assert.equal(h.queue.length,0);assert.equal(h.orders.length,0);
+  }
+});
+test('Somlink queue write interruption can recover without another debit',async()=>{
+  const h=harness(approved,{somlink:true});await h.pay();h.queue.length=0;
+  await h.pay();assert.equal(h.calls,1);assert.equal(h.orders.length,1);assert.equal(h.queue.length,1);
+  h.queue[0].status='failed';await h.pay();assert.equal(h.queue[0].status,'failed');assert.equal(h.queue.length,1);
 });
