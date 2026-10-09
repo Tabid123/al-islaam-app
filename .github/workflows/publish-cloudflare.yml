@@ -1,36 +1,42 @@
-name: Publish Al-islaam to Cloudflare
+name: Publish Al-islaam
+run-name: Publish Al-islaam on Cloudflare
 
 on:
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
-  group: al-islaam-production
+  group: publish-al-islaam-cloudflare
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    name: Build and publish
+  publish:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 2
     steps:
-      - name: Checkout main
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Build production app
-        run: npm run build
-
-      - name: Publish to Cloudflare Workers
-        run: npx --yes wrangler@4 deploy --config wrangler.jsonc
+      - name: Request a Cloudflare production build
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          DEPLOY_HOOK: ${{ secrets.CLOUDFLARE_DEPLOY_HOOK }}
+        shell: python
+        run: |
+          import json, os, re, sys, urllib.error, urllib.request
+          hook = os.environ.get('DEPLOY_HOOK', '').strip()
+          if not hook:
+              sys.exit('Add CLOUDFLARE_DEPLOY_HOOK in repository Settings > Secrets and variables > Actions. Create the hook for main in Cloudflare Workers > al-islaam-app > Settings > Builds > Deploy Hooks.')
+          if not re.fullmatch(r'https://api\\.cloudflare\\.com/client/v4/workers/builds/deploy_hooks/[A-Za-z0-9-]+', hook):
+              sys.exit('CLOUDFLARE_DEPLOY_HOOK must be a Cloudflare Workers deploy-hook URL.')
+          request = urllib.request.Request(hook, data=b'{}', headers={'Content-Type': 'application/json'}, method='POST')
+          try:
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  payload = json.load(response)
+          except urllib.error.HTTPError as error:
+              sys.exit(f'Cloudflare rejected the publish request (HTTP {error.code}). Check or recreate the deploy hook.')
+          except Exception:
+              sys.exit('Could not confirm the publish request. Check Cloudflare Builds before retrying.')
+          if payload.get('success') is not True:
+              sys.exit('Cloudflare did not accept the build request. Check the deploy-hook configuration.')
+          print('Cloudflare accepted the build request.')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write('Publish request accepted by Cloudflare. Check Workers & Pages → al-islaam-app → Builds for the final deployment result.\\n')
