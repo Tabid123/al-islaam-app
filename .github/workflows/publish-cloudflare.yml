@@ -24,8 +24,8 @@ jobs:
           import json, os, re, sys, urllib.error, urllib.request
           hook = os.environ.get('DEPLOY_HOOK', '').strip()
           if not hook:
-              sys.exit('Add CLOUDFLARE_DEPLOY_HOOK in repository Settings > Secrets and variables > Actions. Create the hook for main in Cloudflare Workers > al-islaam-app > Settings > Builds > Deploy Hooks.')
-          if not re.fullmatch(r'https://api\\.cloudflare\\.com/client/v4/workers/builds/deploy_hooks/[A-Za-z0-9-]+', hook):
+              sys.exit('Add CLOUDFLARE_DEPLOY_HOOK in repository Settings > Secrets and variables > Actions. Create the hook for the main branch in Cloudflare Workers > al-islaam-app > Settings > Builds > Deploy Hooks.')
+          if not re.fullmatch(r'https://api\.cloudflare\.com/client/v4/workers/builds/deploy_hooks/[A-Za-z0-9-]+', hook):
               sys.exit('CLOUDFLARE_DEPLOY_HOOK must be a Cloudflare Workers deploy-hook URL.')
           request = urllib.request.Request(hook, data=b'{}', headers={'Content-Type': 'application/json'}, method='POST')
           try:
@@ -39,4 +39,4 @@ jobs:
               sys.exit('Cloudflare did not accept the build request. Check the deploy-hook configuration.')
           print('Cloudflare accepted the build request.')
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
-              summary.write('Publish request accepted by Cloudflare. Check Workers & Pages → al-islaam-app → Builds for the final deployment result.\\n')
+              summary.write('Publish request accepted by Cloudflare. The deploy hook must target **main**.\n\nCheck **Workers & Pages → al-islaam-app → Builds** for the build and deployment result. This workflow confirms the request, not deployment completion.\n')
