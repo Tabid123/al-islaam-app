@@ -3542,6 +3542,28 @@ const AdminDashboard = () => {
                 
                 setIsAddingReg(true);
                 
+                // Check the database directly: the admin list can be truncated at 1,000 records.
+                const sender = newRegSenderPhone.replace(/\D/g, '').replace(/^252/, '').replace(/^0(?=\d{9}$)/, '');
+                const variants = [...new Set([sender, '0' + sender, '252' + sender, '+252' + sender])];
+                const { data: existingRegs, error: checkError } = await supabase
+                  .from('offline_registrations')
+                  .select('*')
+                  .in('sender_phone', variants)
+                  .limit(1);
+                if (checkError) {
+                  setIsAddingReg(false);
+                  toast({ title: 'Hubinta lambarka way fashilantay', description: checkError.message, variant: 'destructive' });
+                  return;
+                }
+                if (existingRegs?.length) {
+                  setIsAddingReg(false);
+                  setShowAddRegDialog(false);
+                  setOfflineRegSearch(sender);
+                  setOfflineRegFilter('all');
+                  toast({ title: 'Lambarkan horay ayuu u diiwaangashan yahay', description: 'Xogtiisa ayaa lagu soo bandhigayaa raadinta.' });
+                  return;
+                }
+
                 // Find provider id from providers list
                 const provider = providers.find(p => p.provider_name === newRegProvider);
                 
@@ -3558,11 +3580,14 @@ const AdminDashboard = () => {
                 setIsAddingReg(false);
                 
                 if (error) {
-                  toast({
-                    title: language === 'so' ? 'Khalad' : 'Error',
-                    description: error.message,
-                    variant: 'destructive',
-                  });
+                  if (error.code === '23505') {
+                    setShowAddRegDialog(false);
+                    setOfflineRegSearch(sender);
+                    setOfflineRegFilter('all');
+                    toast({ title: 'Lambarkan horay ayuu u diiwaangashan yahay', description: 'Xogta lambarka ka eeg raadinta.' });
+                  } else {
+                    toast({ title: language === 'so' ? 'Khalad' : 'Error', description: error.message, variant: 'destructive' });
+                  }
                 } else {
                   toast({
                     title: language === 'so' ? 'Guul' : 'Success',
