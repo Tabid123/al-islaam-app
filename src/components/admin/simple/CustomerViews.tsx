@@ -173,7 +173,15 @@ export const CustomersCustomView = ({ isSo }: { isSo: boolean }) => {
     if (!newPhone || newPhone === item.phone_number) return;
     if (!/^\d{9,12}$/.test(newPhone)) { toast.error(isSo ? 'Lambarka sax ma aha' : 'Invalid phone number'); return; }
     const { error } = await supabase.from('verified_phones').update({ phone_number: newPhone }).eq('id', item.id);
-    if (error) { toast.error('Error: ' + error.message); return; }
+    if (error) {
+      if (error.code === '23505') {
+        setSearch(sender);
+        setFilter('all');
+        setShowAdd(false);
+        toast.info(isSo ? 'Lambarkan horay ayuu u diiwaangashan yahay. Xogtiisa hoos ka eeg.' : 'Already registered. See details below.');
+      } else toast.error('Error: ' + error.message);
+      return;
+    }
     setPhones(prev => prev.map(p => p.id === item.id ? { ...p, phone_number: newPhone } : p));
     toast.success(isSo ? 'Lambarka waa la beddelay' : 'Phone updated');
   };
@@ -331,6 +339,40 @@ export const OfflineRegistrationsCustomView = ({ isSo }: { isSo: boolean }) => {
   const [newReg, setNewReg] = useState({ sender_phone: '', receiver_phone: '', provider_id: '' });
   const [providerOptions, setProviderOptions] = useState<Array<{ id: string; provider_name: string }>>([]);
   const [regStats, setRegStats] = useState({ total: 0, active: 0, inactive: 0, today: 0 });
+  const [lookupRegs, setLookupRegs] = useState<any[]>([]);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupError, setLookupError] = useState('');
+  const normalizePhone = (value: string) => {
+    const digits = String(value || '').replace(/\D/g, '');
+    return digits.startsWith('252') ? digits.slice(3) : digits.startsWith('0') && digits.length === 10 ? digits.slice(1) : digits;
+  };
+  const findRegistration = async (value: string) => {
+    const local = normalizePhone(value);
+    const variants = [...new Set([local, '0' + local, '252' + local, '+252' + local])];
+    return supabase.from('offline_registrations').select('*')
+      .or(variants.flatMap(phone => ['sender_phone.eq.' + phone, 'receiver_phone.eq.' + phone]).join(','))
+      .order('created_at', { ascending: false }).limit(100);
+  };
+  useEffect(() => {
+    if (normalizePhone(search).length < 7) {
+      setLookupRegs([]);
+      setLookupLoading(false);
+      setLookupError('');
+      return;
+    }
+    let active = true;
+    setLookupLoading(true);
+    setLookupError('');
+    const timer = setTimeout(async () => {
+      const { data, error } = await findRegistration(search);
+      if (!active) return;
+      setLookupLoading(false);
+      setLookupError(error?.message || '');
+      setLookupRegs(data || []);
+    }, 300);
+    return () => { active = false; clearTimeout(timer); };
+  }, [search]);
+
 
   useEffect(() => {
     supabase.from('providers_config').select('id, provider_name').eq('is_active', true)
@@ -376,6 +418,7 @@ export const OfflineRegistrationsCustomView = ({ isSo }: { isSo: boolean }) => {
     if (filter === 'active') filtered = filtered.filter(r => r.is_active);
     else if (filter === 'inactive') filtered = filtered.filter(r => !r.is_active);
     else if (filter === 'today') filtered = filtered.filter(r => new Date(r.created_at) >= startOfToday);
+    if (normalizePhone(search).length >= 7) return lookupRegs;
     if (search) filtered = filtered.filter(r => r.sender_phone?.includes(search) || r.receiver_phone?.includes(search));
     return filtered;
   };
@@ -395,6 +438,17 @@ export const OfflineRegistrationsCustomView = ({ isSo }: { isSo: boolean }) => {
 
   const addReg = async () => {
     if (!newReg.sender_phone || !newReg.receiver_phone) { toast.error(isSo ? 'Buuxi meelaha' : 'Fill required fields'); return; }
+    const sender = normalizePhone(newReg.sender_phone);
+    const { data: existing, error: lookupFailure } = await findRegistration(sender);
+    if (lookupFailure) { toast.error(isSo ? 'Hubinta lambarka way fashilantay' : 'Phone lookup failed'); return; }
+    const previous = (existing || []).find(r => normalizePhone(r.sender_phone) === sender);
+    if (previous) {
+      setSearch(sender);
+      setFilter('all');
+      setShowAdd(false);
+      toast.info(isSo ? 'Lambarkan horay ayuu u diiwaangashan yahay. Xogtiisa hoos ka eeg.' : 'Already registered. See details below.');
+      return;
+    }
     const chosen = providerOptions.find(p => p.id === newReg.provider_id);
     const { data, error } = await supabase.from('offline_registrations').insert({
       sender_phone: newReg.sender_phone,
@@ -427,6 +481,20 @@ export const OfflineRegistrationsCustomView = ({ isSo }: { isSo: boolean }) => {
         { key: 'today', label: isSo ? 'Maanta' : 'Today', count: todayRegs },
       ]} activeKey={filter} onSelect={setFilter} activeColor="bg-orange-500" />
       <SearchInput value={search} onChange={setSearch} placeholder={isSo ? 'Raadi sender ama receiver...' : 'Search...'} />
+      {normalizePhone(search).length >= 7 && (
+        <div className="rounded-xl border bg-white dark:bg-gray-800 p-3 text-sm">
+          {lookupLoading ? <span>{isSo ? 'Hubinaya lambarka...' : 'Checking phone...'}</span>
+           : lookupError ? <span className="text-red-600">{isSo ? 'Hubinta lambarka way fashilantay' : 'Lookup failed'}: {lookupError}</span>
+           : lookupRegs.length > 0 ? <span className="font-semibold text-green-600">{isSo ? 'Lambarkan waa diiwaangashan yahay. Xogtiisa hoos ayay ku qoran tahay.' : 'This number is registered. Details are shown below.'}</span>
+           : <div className="flex flex-wrap items-center gap-2">
+               <span>{isSo ? 'Lambarkan ma diiwaangashana. Ma diiwaangelinaa?' : 'Number not registered. Register it?'}</span>
+               <button className="rounded-lg bg-orange-500 text-white px-3 py-1.5" onClick={() => {
+                 setNewReg(p => ({ ...p, sender_phone: normalizePhone(search) }));
+                 setShowAdd(true);
+               }}>{isSo ? 'Diiwaangeli' : 'Register'}</button>
+             </div>}
+        </div>
+      )}
       <button onClick={() => setShowAdd(!showAdd)} className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 active:scale-[0.98]">
         <Plus className="w-4 h-4" /> {isSo ? 'Diiwaangelin Cusub' : 'Add New Registration'}
       </button>
@@ -445,7 +513,7 @@ export const OfflineRegistrationsCustomView = ({ isSo }: { isSo: boolean }) => {
           </button>
         </div>
       )}
-      {loading ? <LazyFallback /> : filteredRegs.length === 0 ? <EmptyState message={isSo ? 'Wax lama helin' : 'No registrations found'} /> : (
+      {(normalizePhone(search).length >= 7 ? lookupLoading : loading) ? <LazyFallback /> : filteredRegs.length === 0 ? (!lookupError && <EmptyState message={isSo ? 'Wax lama helin' : 'No registrations found'} />) : (
         <div className="space-y-2">
           {filteredRegs.map((item, idx) => {
             const isExpanded = expandedId === item.id;
