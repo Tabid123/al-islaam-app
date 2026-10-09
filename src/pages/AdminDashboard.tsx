@@ -634,6 +634,41 @@ const AdminDashboard = () => {
   const [offlineRegistrations, setOfflineRegistrations] = useState<OfflineRegistration[]>([]);
   const [offlineRegFilter, setOfflineRegFilter] = useState<'all' | 'active' | 'inactive' | 'today'>('all');
   const [offlineRegSearch, setOfflineRegSearch] = useState('');
+  // Direct lookup avoids Supabase's default 1,000-row limit on admin lists.
+  const [offlineLookup, setOfflineLookup] = useState<OfflineRegistration[]>([]);
+  const [offlineLookupLoading, setOfflineLookupLoading] = useState(false);
+  const [offlineLookupError, setOfflineLookupError] = useState('');
+  useEffect(() => {
+    const digits = offlineRegSearch.replace(/\D/g, '');
+    if (digits.length < 7) {
+      setOfflineLookup([]);
+      setOfflineLookupLoading(false);
+      setOfflineLookupError('');
+      return;
+    }
+    let cancelled = false;
+    setOfflineLookupLoading(true);
+    setOfflineLookupError('');
+    const timer = setTimeout(async () => {
+      const local = digits.startsWith('252') ? digits.slice(3) : digits.startsWith('0') ? digits.slice(1) : digits;
+      const variants = [...new Set([local, '0' + local, '252' + local, '+252' + local])];
+      const conditions = variants.flatMap(phone => [
+        'sender_phone.eq.' + phone, 'receiver_phone.eq.' + phone,
+      ]).join(',');
+      const { data, error } = await supabase.from('offline_registrations')
+        .select('*').or(conditions).order('created_at', { ascending: false }).limit(100);
+      if (cancelled) return;
+      setOfflineLookupLoading(false);
+      if (error) {
+        setOfflineLookupError(error.message);
+        setOfflineLookup([]);
+      } else {
+        setOfflineLookup((data || []) as OfflineRegistration[]);
+      }
+    }, 350);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [offlineRegSearch]);
+
   
   // Add registration dialog state
   const [showAddRegDialog, setShowAddRegDialog] = useState(false);
@@ -3738,6 +3773,39 @@ const AdminDashboard = () => {
                           </Button>
                         </div>
                       </div>
+
+                      {offlineRegSearch.replace(/\D/g, '').length >= 7 && (
+                        <div className="rounded-lg border p-4 space-y-3">
+                          {offlineLookupLoading ? (
+                            <p className="text-sm flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Hubinaya lambarka...</p>
+                          ) : offlineLookupError ? (
+                            <p role="alert" className="text-sm text-destructive">Hubinta lambarka way fashilantay: {offlineLookupError}</p>
+                          ) : offlineLookup.length > 0 ? (
+                            <>
+                              <p className="font-semibold text-emerald-600">Lambarkan waa diiwaangashan yahay ({offlineLookup.length})</p>
+                              {offlineLookup.map(reg => (
+                                <div key={reg.id} className="rounded-md border p-3 text-sm space-y-1">
+                                  <p><strong>Lacag bixiye:</strong> {reg.sender_phone}</p>
+                                  <p><strong>Lambarka qaataha:</strong> {reg.receiver_phone}</p>
+                                  <p><strong>Shirkadda:</strong> {reg.provider_name}</p>
+                                  <p><strong>Xaaladda:</strong> {reg.is_active ? 'Active' : 'Inactive'}</p>
+                                  <p><strong>La diiwaangeliyay:</strong> {new Date(reg.created_at).toLocaleString()}</p>
+                                  <Button size="sm" variant="outline" onClick={() => openEditReg(reg)}>Wax ka beddel</Button>
+                                </div>
+                              ))}
+                            </>
+                          ) : (
+                            <div className="space-y-2">
+                              <p className="font-medium">Lambarkan ma diiwaangashana. Ma diiwaangelinaa lambarkan?</p>
+                              <Button size="sm" onClick={() => {
+                                const digits = offlineRegSearch.replace(/\D/g, '');
+                                setNewRegSenderPhone(digits.startsWith('252') ? digits.slice(3) : digits.startsWith('0') ? digits.slice(1) : digits);
+                                setShowAddRegDialog(true);
+                              }}><UserPlus className="h-4 w-4 mr-2" /> Diiwaangeli</Button>
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Mobile Card View */}
                       <div className="md:hidden space-y-2">
