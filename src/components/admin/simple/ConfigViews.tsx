@@ -1032,6 +1032,26 @@ export const PaymentSettingsCustomView = ({ isSo }: { isSo: boolean }) => {
         { label: 'Total', value: providers.length, icon: CreditCard, color: 'bg-violet-500' },
         { label: 'Active', value: providers.filter(p => p.is_active).length, icon: CheckCircle, color: 'bg-green-500' },
       ]} />
+      {/* Integration setup belongs to separate protected routes, but must be
+          discoverable directly in Payment Settings on mobile and desktop. */}
+      <div className="rounded-xl border bg-white dark:bg-gray-800 p-3 space-y-2">
+        <p className="font-semibold text-sm text-gray-800 dark:text-white">
+          {isSo ? 'Dejinta Payment API-yada' : 'Payment API integrations'}
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <a href="/simple-admin/waafipay-api"
+            className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-900 px-3 py-3 text-sm font-semibold text-blue-800 dark:text-blue-200">
+            <span>WaafiPay API</span><span aria-hidden="true">→</span>
+          </a>
+          <a href="/simple-admin/edahab-api"
+            className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-900 px-3 py-3 text-sm font-semibold text-green-800 dark:text-green-200">
+            <span>eDahab API</span><span aria-hidden="true">→</span>
+          </a>
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          {isSo ? 'Halkan ka fur dejinta iyo hubinta API kasta; liiska hoose waa payment providers.' : 'Open and configure each API here; the list below is for payment providers.'}
+        </p>
+      </div>
       <button onClick={() => { setShowAdd(!showAdd); setEditingId(null); setNewPay({ provider_name: '', payment_mode: 'ussd', payment_number: '', commission_rate: '0', prefix_code: '', ussd_code_template: '', provider_logo: '' }); }}
         className="w-full py-2.5 bg-gradient-to-r from-violet-500 to-violet-600 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 active:scale-[0.98]">
         <Plus className="w-4 h-4" /> {isSo ? 'Payment Provider Cusub' : 'Add Payment Provider'}
