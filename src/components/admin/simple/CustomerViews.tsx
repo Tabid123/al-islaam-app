@@ -175,9 +175,8 @@ export const CustomersCustomView = ({ isSo }: { isSo: boolean }) => {
     const { error } = await supabase.from('verified_phones').update({ phone_number: newPhone }).eq('id', item.id);
     if (error) {
       if (error.code === '23505') {
-        setSearch(sender);
+        setSearch(newPhone);
         setFilter('all');
-        setShowAdd(false);
         toast.info(isSo ? 'Lambarkan horay ayuu u diiwaangashan yahay. Xogtiisa hoos ka eeg.' : 'Already registered. See details below.');
       } else toast.error('Error: ' + error.message);
       return;
