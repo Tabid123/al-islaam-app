@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -1102,6 +1102,103 @@ export type Database = {
             columns: ["root_package_id"]
             isOneToOne: false
             referencedRelation: "data_packages_config"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      edahab_transactions: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          client_reference: string
+          created_at: string
+          currency: string
+          customer_phone: string
+          error_message: string | null
+          id: string
+          invoice_id: string | null
+          invoice_status: string | null
+          order_id: string | null
+          package_id: string
+          payer_phone: string
+          payment_provider_id: string | null
+          raw_response: Json | null
+          receiver_phone: string
+          request_id: string | null
+          response_code: number | null
+          response_message: string | null
+          status: string
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          client_reference: string
+          created_at?: string
+          currency?: string
+          customer_phone: string
+          error_message?: string | null
+          id?: string
+          invoice_id?: string | null
+          invoice_status?: string | null
+          order_id?: string | null
+          package_id: string
+          payer_phone: string
+          payment_provider_id?: string | null
+          raw_response?: Json | null
+          receiver_phone: string
+          request_id?: string | null
+          response_code?: number | null
+          response_message?: string | null
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          client_reference?: string
+          created_at?: string
+          currency?: string
+          customer_phone?: string
+          error_message?: string | null
+          id?: string
+          invoice_id?: string | null
+          invoice_status?: string | null
+          order_id?: string | null
+          package_id?: string
+          payer_phone?: string
+          payment_provider_id?: string | null
+          raw_response?: Json | null
+          receiver_phone?: string
+          request_id?: string | null
+          response_code?: number | null
+          response_message?: string | null
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "edahab_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "edahab_transactions_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "data_packages_config"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "edahab_transactions_payment_provider_id_fkey"
+            columns: ["payment_provider_id"]
+            isOneToOne: false
+            referencedRelation: "payment_providers_config"
             referencedColumns: ["id"]
           },
         ]
@@ -2242,6 +2339,106 @@ export type Database = {
         }
         Relationships: []
       }
+      waafipay_transactions: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          client_reference: string
+          created_at: string
+          currency: string
+          environment: string
+          error_message: string | null
+          id: string
+          issuer_transaction_id: string | null
+          order_id: string | null
+          package_id: string
+          payer_phone: string
+          payment_provider_id: string | null
+          raw_response: Json | null
+          receiver_phone: string
+          reference_id: string
+          request_id: string
+          response_code: string | null
+          response_message: string | null
+          status: string
+          updated_at: string
+          waafi_state: string | null
+          waafi_transaction_id: string | null
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          client_reference: string
+          created_at?: string
+          currency?: string
+          environment: string
+          error_message?: string | null
+          id?: string
+          issuer_transaction_id?: string | null
+          order_id?: string | null
+          package_id: string
+          payer_phone: string
+          payment_provider_id?: string | null
+          raw_response?: Json | null
+          receiver_phone: string
+          reference_id: string
+          request_id: string
+          response_code?: string | null
+          response_message?: string | null
+          status?: string
+          updated_at?: string
+          waafi_state?: string | null
+          waafi_transaction_id?: string | null
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          client_reference?: string
+          created_at?: string
+          currency?: string
+          environment?: string
+          error_message?: string | null
+          id?: string
+          issuer_transaction_id?: string | null
+          order_id?: string | null
+          package_id?: string
+          payer_phone?: string
+          payment_provider_id?: string | null
+          raw_response?: Json | null
+          receiver_phone?: string
+          reference_id?: string
+          request_id?: string
+          response_code?: string | null
+          response_message?: string | null
+          status?: string
+          updated_at?: string
+          waafi_state?: string | null
+          waafi_transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waafipay_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waafipay_transactions_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "data_packages_config"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waafipay_transactions_payment_provider_id_fkey"
+            columns: ["payment_provider_id"]
+            isOneToOne: false
+            referencedRelation: "payment_providers_config"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -2353,6 +2550,23 @@ export type Database = {
       }
       discovery_has_waiting_request: { Args: never; Returns: boolean }
       discovery_session_lost: { Args: { p_id: string }; Returns: Json }
+      edahab_admin_delete: { Args: never; Returns: Json }
+      edahab_admin_save: {
+        Args: {
+          p_agent_code: string
+          p_api_key?: string
+          p_api_secret?: string
+          p_is_active?: boolean
+          p_merchant_phone: string
+        }
+        Returns: Json
+      }
+      edahab_admin_status: { Args: never; Returns: Json }
+      edahab_backend_credentials: { Args: never; Returns: Json }
+      enqueue_somlink_delivery: {
+        Args: { p_order_id: string }
+        Returns: string
+      }
       get_active_categories: {
         Args: { p_provider_id?: string }
         Returns: {
@@ -2424,21 +2638,7 @@ export type Database = {
           p_search?: string
           p_status?: string
         }
-        Returns: {
-          cost_price: number
-          created_at: string
-          customer_phone: string
-          data_amount: string
-          delivery_status: string
-          id: string
-          package_name: string
-          provider_id: string
-          receiver_phone: string
-          selling_price: number
-          status: string
-          total_count: number
-          tx_id: string
-        }[]
+        Returns: Json
       }
       get_admin_transactions_summary: {
         Args: { p_period?: string; p_provider_id?: string }
@@ -2555,8 +2755,26 @@ export type Database = {
         Args: { p_campaign_id: string; p_field: string }
         Returns: undefined
       }
+      ingest_sms_log: {
+        Args: {
+          p_amount?: number
+          p_counterpart_phone?: string
+          p_device_id: string
+          p_sim_number?: string
+          p_sim_slot: number
+          p_sms_body?: string
+          p_sms_sender?: string
+          p_sms_type?: string
+          p_tx_type?: string
+        }
+        Returns: string
+      }
       is_admin: { Args: never; Returns: boolean }
       is_phone_blocked: { Args: { p_phone: string }; Returns: boolean }
+      is_provider_delivery_failure: {
+        Args: { p_response: string }
+        Returns: boolean
+      }
       normalize_provider_text: { Args: { t: string }; Returns: string }
       release_discovery_session: { Args: { p_id: string }; Returns: boolean }
       renew_delivery_lease: {
@@ -2588,9 +2806,45 @@ export type Database = {
         Args: { p_phone: string }
         Returns: undefined
       }
+      ussd_discovery_duration_key: {
+        Args: { p_label: string }
+        Returns: string
+      }
+      ussd_discovery_label_key: { Args: { p_label: string }; Returns: string }
       ussd_duration_key: { Args: { p_label: string }; Returns: string }
       ussd_normalize_label: { Args: { _label: string }; Returns: string }
       ussd_strip_price_prefix: { Args: { p_label: string }; Returns: string }
+      verify_somlink_dispatch_secret: {
+        Args: { p_secret: string }
+        Returns: boolean
+      }
+      waafipay_admin_credentials: { Args: never; Returns: Json }
+      waafipay_admin_delete: { Args: never; Returns: Json }
+      waafipay_admin_save: {
+        Args: {
+          p_api_key?: string
+          p_api_user_id: string
+          p_environment?: string
+          p_is_active?: boolean
+          p_merchant_uid: string
+        }
+        Returns: Json
+      }
+      waafipay_admin_status: { Args: never; Returns: Json }
+      waafipay_finalize_discovery_purchase: {
+        Args: { p_transaction_id: string }
+        Returns: Json
+      }
+      waafipay_resolve_discovery_offer: {
+        Args: {
+          p_discovery_id: string
+          p_expected_price: number
+          p_index: string
+          p_phone: string
+          p_root_package_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "super_admin" | "moderator" | "user"
@@ -2725,4 +2979,3 @@ export const Constants = {
     },
   },
 } as const
-

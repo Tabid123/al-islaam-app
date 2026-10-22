@@ -175,9 +175,8 @@ export const CustomersCustomView = ({ isSo }: { isSo: boolean }) => {
     const { error } = await supabase.from('verified_phones').update({ phone_number: newPhone }).eq('id', item.id);
     if (error) {
       if (error.code === '23505') {
-        setSearch(sender);
+        setSearch(newPhone);
         setFilter('all');
-        setShowAdd(false);
         toast.info(isSo ? 'Lambarkan horay ayuu u diiwaangashan yahay. Xogtiisa hoos ka eeg.' : 'Already registered. See details below.');
       } else toast.error('Error: ' + error.message);
       return;
@@ -436,6 +435,41 @@ export const OfflineRegistrationsCustomView = ({ isSo }: { isSo: boolean }) => {
     toast.success(isSo ? 'Waa la tirtiray' : 'Deleted');
   };
 
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editReg, setEditReg] = useState({ sender_phone: '', receiver_phone: '', provider_id: '' });
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const startEdit = (item: any) => {
+    const matched = item.provider_id
+      ? item.provider_id
+      : providerOptions.find(p => p.provider_name?.toLowerCase() === String(item.provider_name || '').toLowerCase())?.id || '';
+    setEditReg({ sender_phone: item.sender_phone || '', receiver_phone: item.receiver_phone || '', provider_id: matched });
+    setEditingId(item.id);
+  };
+
+  const saveEdit = async (id: string) => {
+    const sender = normalizePhone(editReg.sender_phone);
+    const receiver = normalizePhone(editReg.receiver_phone);
+    if (sender.length !== 9 || receiver.length !== 9) {
+      toast.error(isSo ? 'Lambarada waa inay noqdaan 9 tiro' : 'Phone numbers must be 9 digits');
+      return;
+    }
+    const chosen = providerOptions.find(p => p.id === editReg.provider_id);
+    setSavingEdit(true);
+    const { data, error } = await supabase.from('offline_registrations').update({
+      sender_phone: sender,
+      receiver_phone: receiver,
+      provider_id: chosen?.id ?? null,
+      provider_name: chosen?.provider_name ?? null,
+    } as any).eq('id', id).select().single();
+    setSavingEdit(false);
+    if (error) { toast.error('Error: ' + error.message); return; }
+    setRegs(prev => prev.map(r => r.id === id ? { ...r, ...data } : r));
+    setLookupRegs(prev => prev.map(r => r.id === id ? { ...r, ...data } : r));
+    setEditingId(null);
+    toast.success(isSo ? 'Waa la beddelay' : 'Updated');
+  };
+
   const addReg = async () => {
     if (!newReg.sender_phone || !newReg.receiver_phone) { toast.error(isSo ? 'Buuxi meelaha' : 'Fill required fields'); return; }
     const sender = normalizePhone(newReg.sender_phone);
@@ -540,10 +574,33 @@ export const OfflineRegistrationsCustomView = ({ isSo }: { isSo: boolean }) => {
                     { icon: Calendar, label: isSo ? 'Taariikhda' : 'Date', value: `${formatDate(item.created_at)} ${formatTime(item.created_at)}`, color: 'text-teal-500' },
                     { icon: Power, label: 'Status', value: item.is_active ? 'Active' : 'Inactive', color: item.is_active ? 'text-green-500' : 'text-red-500' },
                   ]} actions={
-                    <>
-                      <ActionBtn onClick={() => toggleStatus(item.id, item.is_active)} icon={Power} label={item.is_active ? 'Disable' : 'Enable'} variant="warning" />
-                      <ActionBtn onClick={() => deleteReg(item.id)} icon={Trash2} label={isSo ? 'Tirtir' : 'Delete'} variant="danger" />
-                    </>
+                    <div className="w-full space-y-2">
+                      {editingId === item.id && (
+                        <div className="rounded-xl border bg-gray-50 dark:bg-gray-700/40 p-2.5 space-y-2">
+                          <input value={editReg.sender_phone} onChange={e => setEditReg(p => ({ ...p, sender_phone: e.target.value.replace(/\D/g, '') }))} placeholder={isSo ? 'Lambarka Diraha' : 'Sender Phone'} inputMode="numeric" className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border text-sm outline-none" />
+                          <input value={editReg.receiver_phone} onChange={e => setEditReg(p => ({ ...p, receiver_phone: e.target.value.replace(/\D/g, '') }))} placeholder={isSo ? 'Lambarka Qaataha' : 'Receiver Phone'} inputMode="numeric" className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border text-sm outline-none" />
+                          <select value={editReg.provider_id} onChange={e => setEditReg(p => ({ ...p, provider_id: e.target.value }))} className="w-full px-3 py-2 rounded-lg bg-white dark:bg-gray-800 border text-sm outline-none">
+                            <option value="">{isSo ? '— Dooro Shirkadda —' : '— Select Provider —'}</option>
+                            {providerOptions.map(p => (
+                              <option key={p.id} value={p.id}>{p.provider_name}</option>
+                            ))}
+                          </select>
+                          <div className="flex gap-2">
+                            <button disabled={savingEdit} onClick={() => saveEdit(item.id)} className="flex-1 py-2 bg-green-500 text-white rounded-lg text-sm font-medium active:bg-green-600 disabled:opacity-50">
+                              {savingEdit ? (isSo ? 'Kaydinaya...' : 'Saving...') : (isSo ? 'Kaydi' : 'Save')}
+                            </button>
+                            <button onClick={() => setEditingId(null)} className="flex-1 py-2 border rounded-lg text-sm font-medium">
+                              {isSo ? 'Ka noqo' : 'Cancel'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex flex-wrap gap-2">
+                        <ActionBtn onClick={() => startEdit(item)} icon={Edit} label={isSo ? 'Wax ka beddel' : 'Edit'} variant="default" />
+                        <ActionBtn onClick={() => toggleStatus(item.id, item.is_active)} icon={Power} label={item.is_active ? 'Disable' : 'Enable'} variant="warning" />
+                        <ActionBtn onClick={() => deleteReg(item.id)} icon={Trash2} label={isSo ? 'Tirtir' : 'Delete'} variant="danger" />
+                      </div>
+                    </div>
                   } />
                 )}
               </div>
