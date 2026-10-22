@@ -9,30 +9,25 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SplatRouteImport } from './routes/$'
 import { Route as ApiPublicSomlinkStatusRouteImport } from './routes/api/public/somlink-status'
-import { Route as ApiPublicHooksUssdRouteImport } from './routes/api/public/hooks/ussd'
 import { Route as ApiPublicHooksSomlinkDispatchRouteImport } from './routes/api/public/hooks/somlink-dispatch'
+import { Route as ApiPublicHooksUssdRouteImport } from './routes/api/public/hooks/ussd'
 
-const SplatRoute = SplatRouteImport.update({
-  id: '/$',
-  path: '/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SplatRoute = SplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSomlinkStatusRoute = ApiPublicSomlinkStatusRouteImport.update({
   id: '/api/public/somlink-status',
   path: '/api/public/somlink-status',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicHooksUssdRoute = ApiPublicHooksUssdRouteImport.update({
-  id: '/api/public/hooks/ussd',
-  path: '/api/public/hooks/ussd',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicHooksSomlinkDispatchRoute =
@@ -41,6 +36,11 @@ const ApiPublicHooksSomlinkDispatchRoute =
     path: '/api/public/hooks/somlink-dispatch',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksUssdRoute = ApiPublicHooksUssdRouteImport.update({
+  id: '/api/public/hooks/ussd',
+  path: '/api/public/hooks/ussd',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -98,18 +98,18 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/$': {
-      id: '/$'
-      path: '/$'
-      fullPath: '/$'
-      preLoaderRoute: typeof SplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$': {
+      id: '/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/somlink-status': {
@@ -119,18 +119,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSomlinkStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/ussd': {
-      id: '/api/public/hooks/ussd'
-      path: '/api/public/hooks/ussd'
-      fullPath: '/api/public/hooks/ussd'
-      preLoaderRoute: typeof ApiPublicHooksUssdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/hooks/somlink-dispatch': {
       id: '/api/public/hooks/somlink-dispatch'
       path: '/api/public/hooks/somlink-dispatch'
       fullPath: '/api/public/hooks/somlink-dispatch'
       preLoaderRoute: typeof ApiPublicHooksSomlinkDispatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/ussd': {
+      id: '/api/public/hooks/ussd'
+      path: '/api/public/hooks/ussd'
+      fullPath: '/api/public/hooks/ussd'
+      preLoaderRoute: typeof ApiPublicHooksUssdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
