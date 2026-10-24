@@ -2279,7 +2279,11 @@ class UssdDialerService : Service() {
             val subscriptionManager = getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE) as SubscriptionManager
             val subscriptionInfoList = subscriptionManager.activeSubscriptionInfoList ?: return false
             
-            val simSlot = subscriptionInfoList.firstOrNull { it.subscriptionId == subscriptionId }?.simSlotIndex ?: -1\n            if (simSlot !in 0..1) {\n                android.util.Log.e("UssdDialer", "❌ Invalid physical SIM slot for subscription $subscriptionId")\n                return false\n            }
+            val simSlot = subscriptionInfoList.firstOrNull { it.subscriptionId == subscriptionId }?.simSlotIndex ?: -1
+            if (simSlot !in 0..1) {
+                android.util.Log.e("UssdDialer", "❌ Invalid physical SIM slot for subscription $subscriptionId")
+                return false
+            }
             android.util.Log.d("UssdDialer", "🎯 Using SIM slot $simSlot (subscriptionId: $subscriptionId)")
             
             val encodedUssd = finalUssd.replace("#", Uri.encode("#"))
