@@ -2083,44 +2083,32 @@ class UssdDialerService : Service() {
                 return null
             }
             
-            val searchName = providerName.lowercase(Locale.getDefault())
-            
-            // Define flexible patterns for each provider
-            val patterns = when (searchName) {
-                "hormuud" -> listOf("hormuud", "hor", "hmd", "hormud")
-                "somnet" -> listOf("somnet", "som", "somalink")
-                "somtel" -> listOf("somtel", "tel")
-                "amtel" -> listOf("amtel", "amt")
-                else -> listOf(searchName)
-            }
-            
-            android.util.Log.d("UssdDialer", "🔍 Searching with patterns: ${patterns.joinToString()} among ${subscriptionInfoList.size} SIMs")
-            
-            for (info in subscriptionInfoList) {
-                val carrierName = info.carrierName?.toString()?.lowercase(Locale.getDefault()) ?: ""
-                val displayName = info.displayName?.toString()?.lowercase(Locale.getDefault()) ?: ""
-                
-                android.util.Log.d("UssdDialer", "📱 Slot ${info.simSlotIndex}: carrier='$carrierName', display='$displayName', subId=${info.subscriptionId}")
-                
-                // Check if ANY pattern matches
-                for (pattern in patterns) {
-                    if (carrierName.contains(pattern) || displayName.contains(pattern)) {
-                        android.util.Log.d("UssdDialer", "✅ MATCHED pattern '$pattern' in slot ${info.simSlotIndex}")
-                        return info.subscriptionId
-                    }
-                }
-            }
-            
-            // If no carrier match and we have a fallback slot from database, use it
+            // Database slots are 1-based (SIM 1 = 1, SIM 2 = 2).
+            // The Devices configuration is authoritative: never override it using
+            // carrier/display names, which may be stale or ambiguous on Android.
             if (fallbackSlot != null) {
-                android.util.Log.w("UssdDialer", "⚠️ No carrier match for '$providerName', using database fallback slot: $fallbackSlot")
-                val fallbackInfo = subscriptionInfoList.find { it.simSlotIndex == fallbackSlot }
-                if (fallbackInfo != null) {
-                    android.util.Log.d("UssdDialer", "✅ Using fallback SIM slot $fallbackSlot (subId=${fallbackInfo.subscriptionId})")
-                    return fallbackInfo.subscriptionId
+                if (fallbackSlot !in 1..2) {
+                    android.util.Log.e("UssdDialer", "❌ Invalid configured SIM slot: $fallbackSlot")
+                    return null
                 }
+                val physicalSlot = fallbackSlot - 1
+                val configuredSim = subscriptionInfoList.firstOrNull { it.simSlotIndex == physicalSlot }
+                if (configuredSim == null) {
+                    android.util.Log.e("UssdDialer", "❌ Configured SIM$fallbackSlot not active; refusing to use another SIM")
+                    return null
+                }
+                android.util.Log.d("UssdDialer", "✅ Devices SIM$fallbackSlot -> physical slot $physicalSlot, subscriptionId=${configuredSim.subscriptionId}")
+                return configuredSim.subscriptionId
             }
-            
+
+            // Legacy orders without a configured slot: match only the precise carrier.
+            val searchName = providerName.trim().lowercase(Locale.ROOT)
+            val matched = subscriptionInfoList.firstOrNull {
+                it.carrierName?.toString()?.trim()?.lowercase(Locale.ROOT) == searchName ||
+                it.displayName?.toString()?.trim()?.lowercase(Locale.ROOT) == searchName
+            }
+            if (matched != null) return matched.subscriptionId
+
             // If no match, log ALL available SIMs for debugging
             android.util.Log.e("UssdDialer", "❌ NO SIM MATCH for '$providerName'")
             return null
@@ -2291,7 +2279,7 @@ class UssdDialerService : Service() {
             val subscriptionManager = getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE) as SubscriptionManager
             val subscriptionInfoList = subscriptionManager.activeSubscriptionInfoList ?: return false
             
-            val simSlot = subscriptionInfoList.indexOfFirst { it.subscriptionId == subscriptionId }
+            val simSlot = subscriptionInfoList.firstOrNull { it.subscriptionId == subscriptionId }?.simSlotIndex ?: -1\n            if (simSlot !in 0..1) {\n                android.util.Log.e("UssdDialer", "❌ Invalid physical SIM slot for subscription $subscriptionId")\n                return false\n            }
             android.util.Log.d("UssdDialer", "🎯 Using SIM slot $simSlot (subscriptionId: $subscriptionId)")
             
             val encodedUssd = finalUssd.replace("#", Uri.encode("#"))
