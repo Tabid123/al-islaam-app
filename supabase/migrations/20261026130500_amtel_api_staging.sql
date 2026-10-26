@@ -77,7 +77,7 @@ BEGIN
  SELECT id INTO j FROM public.amtel_delivery_jobs WHERE order_id=o.id;
  IF j IS NOT NULL THEN RETURN j; END IF;
  INSERT INTO public.amtel_delivery_jobs(order_id,offering_id,receiver_phone,amount,conversation_id)
- VALUES (o.id,m.offering_id,'252'||regexp_replace(o.receiver_phone,'[^0-9]','','g'),m.amount,'AMTEL_'||replace(o.id::text,'-',''))
+ VALUES (o.id,m.offering_id,CASE WHEN regexp_replace(o.receiver_phone,'[^0-9]','','g') LIKE '252%' THEN regexp_replace(o.receiver_phone,'[^0-9]','','g') ELSE '252'||regexp_replace(o.receiver_phone,'[^0-9]','','g') END,m.amount,'AMTEL_'||replace(o.id::text,'-',''))
  RETURNING id INTO j;
  RETURN j;
 END $$;
