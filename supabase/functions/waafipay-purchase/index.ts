@@ -136,6 +136,18 @@ serve(async req => {
     if (!transaction && scheduledFor && (!Number.isFinite(Date.parse(scheduledFor)) || Date.parse(scheduledFor) < Date.now() + 60000)) return json({ error: 'invalid_schedule' }, 422);
     let instruction: any = null;
     let bundleCount = 0;
+    const isAmtel = normalizeProviderSlug(providerConfig.provider_name) === 'amtel';
+    let amtelEnabled = false;
+    if (isAmtel) {
+      const { data: mapping, error: mappingError } = await admin.from('amtel_package_mapping')
+        .select('enabled, offering_id, amtel_offerings!inner(amount, active)')
+        .eq('package_id', pkg.id).maybeSingle();
+      if (mappingError) throw mappingError;
+      amtelEnabled = mapping?.enabled === true && (mapping?.amtel_offerings as any)?.active === true;
+      if (amtelEnabled && Math.abs(Number(pkg.cost_price) - Number((mapping?.amtel_offerings as any)?.amount)) > 0.005) {
+        return json({ error: 'amtel_price_mismatch', message: 'Qiimaha xirmada AMTEL lama xaqiijin. Lacag lagama jarin.' }, 409);
+      }
+    }
     const isSomlink = normalizeProviderSlug(providerConfig.provider_name) === 'somlink';
     if (isSomlink) {
       if (!Number.isInteger(Number(pkg.somlink_bundle_id)) || Number(pkg.somlink_bundle_id) <= 0 ||
@@ -151,7 +163,7 @@ serve(async req => {
         if (!ready) return json({ error: 'somlink_unavailable', message: 'Adeegga dirista Somlink hadda lama heli karo. Lacag lagama jarin.', safe_to_retry: true }, 409);
       }
     }
-    if (!discoveryOffer && !isSomlink) {
+    if (!discoveryOffer && !isSomlink && !amtelEnabled) {
       instruction = await getDeliveryInstruction(admin, pkg.provider_id, pkg.id, pkg.category_id);
       const { count, error: bundleError } = await admin.from('package_delivery_rules').select('id', { head: true, count: 'exact' }).eq('source_package_id', pkg.id).eq('is_active', true);
       if (bundleError) throw bundleError;
