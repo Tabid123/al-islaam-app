@@ -38,8 +38,8 @@ function tagValue(xml: string, tag: string): string | undefined {
   return xml.match(re)?.[1]?.trim();
 }
 export async function purchaseAmtelBundle(input: AmtelBundlePurchase): Promise<AmtelSoapResult> {
-  if (!/^25271\\d{7}$/.test(input.receiver)) throw new Error("Invalid AMTEL receiver MSISDN");
-  if (!/^\\d{5,8}$/.test(input.offeringId)) throw new Error("Invalid AMTEL offering ID");
+  if (!/^25271\d{7}$/.test(input.receiver)) throw new Error("Invalid AMTEL receiver MSISDN");
+  if (!/^\d{5,8}$/.test(input.offeringId)) throw new Error("Invalid AMTEL offering ID");
   if (!(Number.isFinite(input.amount) && input.amount > 0)) throw new Error("Invalid bundle amount");
   if (!/^[A-Za-z0-9_-]{8,80}$/.test(input.conversationId)) throw new Error("Invalid conversation ID");
 
@@ -85,7 +85,7 @@ export async function purchaseAmtelBundle(input: AmtelBundlePurchase): Promise<A
     const resultDescription = tagValue(body, "ResultDesc");
     const transactionId = tagValue(body, "TransactionID");
     // Never echo SOAP responses: they can include private account information.
-    if (!response.ok || !resultCode || /<(?:\\w+:)?Fault\\b/i.test(body)) {
+    if (!response.ok || !resultCode || /<(?:\w+:)?Fault\b/i.test(body)) {
       return { state: "unknown", resultCode, resultDescription, transactionId, conversationId: input.conversationId };
     }
     return {
