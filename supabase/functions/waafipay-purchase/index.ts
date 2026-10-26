@@ -297,7 +297,7 @@ serve(async req => {
       if (error) throw error;
       // The scheduled dispatcher handles this durable queue, including future orders.
     }
-    const queued = await hasActiveDelivery(admin, order.id);
+    const queued = amtelEnabled ? !!(await admin.from('amtel_delivery_jobs').select('id').eq('order_id', order.id).limit(1).maybeSingle()).data : await hasActiveDelivery(admin, order.id);
     return json({ success: true, payment_approved: true, delivery_queued: queued, order_id: order.id, reference_id: transaction.reference_id });
   } catch {
     // Keep unknown/approved references for safe retry; never auto-fall back to USSD.
