@@ -315,7 +315,7 @@ serve(async (req) => {
       }
     }
 
-    const queued = await hasActiveDelivery(admin, order.id);
+    const queued = amtelEnabled ? !!(await admin.from('amtel_delivery_jobs').select('id').eq('order_id', order.id).limit(1).maybeSingle()).data : await hasActiveDelivery(admin, order.id);
     return json({ success: true, payment_approved: true, delivery_queued: queued,
       order_id: order.id, reference_id: tx.client_reference });
   } catch {
