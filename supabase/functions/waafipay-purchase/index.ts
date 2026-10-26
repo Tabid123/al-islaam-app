@@ -271,7 +271,7 @@ serve(async req => {
       // Exactly one request owns delivery dispatch after approval, including concurrent retries.
       const { data: claim, error: claimError } = await admin.from('waafipay_transactions').update({ order_id: order.id }).eq('id', transaction.id).is('order_id', null).select('id');
       if (claimError) throw claimError;
-      if (claim?.length && !isSomlink) {
+      if (claim?.length && !isSomlink && !amtelEnabled) {
         const slug = normalizeProviderSlug(providerConfig.provider_name);
         const bundled = await queueDeliveryWithBundling(admin, order.id, pkg.id, pkg.provider_id, receiver, slug, scheduledFor);
         if (bundled === null) {
@@ -285,6 +285,10 @@ serve(async req => {
           if (error) throw error;
         }
       }
+    }
+    if (amtelEnabled) {
+      const { error } = await admin.rpc('enqueue_amtel_delivery', { p_order_id: order.id });
+      if (error) throw error;
     }
     if (isSomlink) {
       // The database locks the order: checkout retries and the dispatcher cannot
