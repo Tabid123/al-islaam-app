@@ -96,3 +96,48 @@ export async function purchaseAmtelBundle(input: AmtelBundlePurchase): Promise<A
     return { state: "unknown", conversationId: input.conversationId };
   } finally { clearTimeout(timer); }
 }
+
+/** Balance lookup: read-only API call, does not purchase a bundle. */
+export async function queryAmtelBalance(conversationId: string): Promise<AmtelSoapResult & { balanceXml?: string }> {
+  const initiator = required("AMTEL_INITIATOR");
+  const shortCode = process.env.AMTEL_SHORT_CODE || initiator;
+  const thirdParty = required("AMTEL_THIRD_PARTY_ID");
+  const password = required("AMTEL_API_PASSWORD");
+  const securityCredential = required("AMTEL_SECURITY_CREDENTIAL");
+  const timestamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
+  if (!/^[A-Za-z0-9_-]{8,80}$/.test(conversationId)) throw new Error("Invalid conversation ID");
+  const E = xmlEscape;
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:api="${API_NS}" xmlns:req="${REQ_NS}" xmlns:com="${COM_NS}">
+<soapenv:Header/><soapenv:Body><api:Request><req:Header><req:Version>1.0</req:Version>
+<req:CommandID>InitTrans_Query Airtime Inventory</req:CommandID>
+<req:OriginatorConversationID>${E(conversationId)}</req:OriginatorConversationID>
+<req:Caller><req:CallerType>2</req:CallerType><req:ThirdPartyID>${E(thirdParty)}</req:ThirdPartyID>
+<req:Password>${E(password)}</req:Password></req:Caller><req:KeyOwner>1</req:KeyOwner>
+<req:Timestamp>${timestamp}</req:Timestamp></req:Header>
+<req:Body><req:Identity><req:Initiator><req:IdentifierType>12</req:IdentifierType>
+<req:Identifier>${E(initiator)}</req:Identifier>
+<req:SecurityCredential>${E(securityCredential)}</req:SecurityCredential>
+<req:ShortCode>${E(shortCode)}</req:ShortCode></req:Initiator>
+<req:ReceiverParty><req:IdentifierType>4</req:IdentifierType><req:Identifier>${E(initiator)}</req:Identifier>
+</req:ReceiverParty></req:Identity>
+<req:TransactionRequest><req:Parameters>
+<req:Parameter><com:Key>AccountType</com:Key><com:Value>Airtime Account for Agent</com:Value></req:Parameter>
+<req:Parameter><com:Key>TargetOrgList</com:Key><com:Value>${E(initiator)}</com:Value></req:Parameter>
+</req:Parameters></req:TransactionRequest>
+<req:ReferenceData><req:ReferenceItem><com:Key>POSDeviceID</com:Key><com:Value>ALISLAAM-API</com:Value></req:ReferenceItem></req:ReferenceData>
+</req:Body></api:Request></soapenv:Body></soapenv:Envelope>`;
+  try {
+    const response = await fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "text/xml; charset=utf-8" },
+      body: xml, signal: AbortSignal.timeout(15000) });
+    const text = await response.text();
+    const resultCode = tagValue(text, "ResultCode");
+    const resultDescription = tagValue(text, "ResultDesc");
+    // Do not return raw response: account details may be sensitive.
+    const state = response.ok && resultCode === "0" ? "success" :
+      response.ok && resultCode ? "rejected" : "unknown";
+    return { state, resultCode, resultDescription, conversationId };
+  } catch {
+    return { state: "unknown", conversationId };
+  }
+}
