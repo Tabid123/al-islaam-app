@@ -34,7 +34,7 @@ function required(name: string): string {
 }
 function tagValue(xml: string, tag: string): string | undefined {
   // SOAP result prefixes may differ. Read only known simple text fields.
-  const re = new RegExp(`<(?:[\w-]+:)?${tag}\b[^>]*>([^<]*)<\/(?:[\w-]+:)?${tag}>`, "i");
+  const re = new RegExp(`<(?:[\\w-]+:)?${tag}\\b[^>]*>([^<]*)<\\/(?:[\\w-]+:)?${tag}>`, "i");
   return xml.match(re)?.[1]?.trim();
 }
 export async function purchaseAmtelBundle(input: AmtelBundlePurchase): Promise<AmtelSoapResult> {
