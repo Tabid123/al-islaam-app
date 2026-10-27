@@ -13,7 +13,14 @@ export const checkAmtelBalance = createServerFn({ method: "POST" })
       .limit(1)
       .maybeSingle();
     if (error || !role) throw new Error("Admin access required");
-    if (process.env.AMTEL_BALANCE_TEST_ENABLED !== "true") {
+    // In Cloudflare Workers, bindings may be available through cloudflare:workers even
+    // when Nitro does not populate process.env for server functions.
+    let flag = process.env.AMTEL_BALANCE_TEST_ENABLED;
+    try {
+      const workers = await import("cloudflare:workers");
+      flag = (workers.env as Record<string, string>).AMTEL_BALANCE_TEST_ENABLED ?? flag;
+    } catch { /* Non-Cloudflare runtime: use process.env */ }
+    if (flag?.trim().toLowerCase() !== "true") {
       return { state: "disabled" as const, message: "AMTEL balance test is disabled." };
     }
     const { queryAmtelBalance } = await import("./amtel.server");
