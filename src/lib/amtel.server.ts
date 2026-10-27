@@ -141,8 +141,23 @@ export async function queryAmtelBalance(conversationId: string): Promise<AmtelSo
     // Do not return raw response: account details may be sensitive.
     const state = response.ok && resultCode === "0" ? "success" :
       response.ok && resultCode ? "rejected" : "unknown";
-    return { state, resultCode, resultDescription, conversationId };
-  } catch {
-    return { state: "unknown", conversationId };
+    const contentType = response.headers.get("content-type") || "";
+    const format = /xml/i.test(contentType) ? "XML" : /html/i.test(contentType) ? "HTML" : /json/i.test(contentType) ? "JSON" : "other";
+    const diagnosis = !response.ok
+      ? `AMTEL balance endpoint returned HTTP ${response.status} (${format}); connection reached an HTTP server, but balance was not confirmed.`
+      : !resultCode
+      ? `AMTEL balance endpoint returned HTTP ${response.status} (${format}) without a SOAP ResultCode.`
+      : undefined;
+    return { state, resultCode, resultDescription: diagnosis || resultDescription, conversationId };
+  } catch (error: unknown) {
+    const name = error instanceof Error ? error.name : "";
+    const timeout = name === "TimeoutError" || name === "AbortError";
+    return {
+      state: "unknown",
+      resultDescription: timeout
+        ? "AMTEL balance request timed out after 15 seconds; no HTTP response was confirmed."
+        : "AMTEL balance connection failed before an HTTP response. Check connectivity/TLS and provider access to topup.amtelevc.com:3000.",
+      conversationId,
+    };
   }
 }
