@@ -74,8 +74,13 @@ const AppSettings = () => {
         setAmtelResult('No authenticated session. Log in with admin email and password; emergency PIN is not sufficient for this test.');
         return;
       }
-      const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin');
-      if (adminError || !isAdmin) {
+      const { data: adminRole, error: adminError } = await supabase.from('user_roles')
+        .select('role')
+        .eq('user_id', session.session.user.id)
+        .in('role', ['admin', 'super_admin'])
+        .limit(1)
+        .maybeSingle();
+      if (adminError || !adminRole) {
         setAmtelResult('Admin authorization failed. Use a verified admin email/password login.');
         return;
       }
