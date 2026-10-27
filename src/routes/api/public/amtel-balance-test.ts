@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getRuntimeSecret } from "@/lib/runtimeEnv.server";
 
 /**
  * Manual, read-only AMTEL inventory connectivity test.
@@ -9,11 +10,11 @@ export const Route = createFileRoute("/api/public/amtel-balance-test")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const secret = process.env.AMTEL_DISPATCH_SECRET;
+        const secret = getRuntimeSecret("AMTEL_DISPATCH_SECRET");
         if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
           return Response.json({ error: "unauthorized" }, { status: 401 });
         }
-        if (process.env.AMTEL_BALANCE_TEST_ENABLED !== "true") {
+        if (getRuntimeSecret("AMTEL_BALANCE_TEST_ENABLED") !== "true") {
           return Response.json({ error: "balance_test_disabled" }, { status: 503 });
         }
         const { queryAmtelBalance } = await import("@/lib/amtel.server");
