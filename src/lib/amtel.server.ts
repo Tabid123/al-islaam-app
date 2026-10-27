@@ -1,5 +1,3 @@
-import { env } from "cloudflare:workers";
-
 /**
  * AMTEL SOAP bundle purchasing client.
  * Server-only: configure credentials in the deployment secret store.
@@ -30,7 +28,7 @@ export type AmtelSoapResult = {
   conversationId: string;
 };
 function optionalSecret(name: string): string | undefined {
-  return (env as Record<string, string | undefined>)[name] ?? process.env[name];
+  return process.env[name];
 }
 function required(name: string): string {
   const value = optionalSecret(name);
