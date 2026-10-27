@@ -6,6 +6,8 @@
  * A network timeout or malformed response is UNKNOWN, not a confirmed failure:
  * do not retry a possibly charged transaction without reconciling with AMTEL.
  */
+import { getRuntimeSecret } from "./runtimeEnv.server";
+
 const ENDPOINT = "https://topup.amtelevc.com:3000/payment/services/SYNCAPIRequestMgrService";
 const API_NS = "http://cps.huawei.com/synccpsinterface/api_requestmgr";
 const REQ_NS = "http://cps.huawei.com/synccpsinterface/request";
@@ -28,7 +30,7 @@ export type AmtelSoapResult = {
   conversationId: string;
 };
 function optionalSecret(name: string): string | undefined {
-  return process.env[name];
+  return getRuntimeSecret(name);
 }
 function required(name: string): string {
   const value = optionalSecret(name);
