@@ -17,7 +17,27 @@ export const checkAmtelBalance = createServerFn({ method: "POST" })
     // Do not depend on the optional dispatcher feature flag used for purchases.
     const { queryAmtelBalance } = await import("./amtel.server");
     const id = "BAL_" + crypto.randomUUID().replace(/-/g, "");
-    const response = await queryAmtelBalance(id);
+    let response;
+    try {
+      response = await queryAmtelBalance(id);
+    } catch (error: any) {
+      const message = String(error?.message || "");
+      const missing = message.match(/^Missing AMTEL secret: ([A-Z0-9_]+)$/);
+      if (missing) {
+        return {
+          state: "config_error" as const,
+          resultCode: null,
+          message: `Cloudflare runtime is missing: ${missing[1]}`,
+          conversationId: id,
+        };
+      }
+      return {
+        state: "server_error" as const,
+        resultCode: null,
+        message: "AMTEL request setup failed before contacting the provider.",
+        conversationId: id,
+      };
+    }
     return {
       state: response.state,
       resultCode: response.resultCode ?? null,
