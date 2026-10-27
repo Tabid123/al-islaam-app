@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getRuntimeSecret } from "@/lib/runtimeEnv.server";
 
 /**
  * Run from a trusted scheduler only. Set AMTEL_DISPATCH_SECRET in server secrets
@@ -8,11 +9,11 @@ export const Route = createFileRoute("/api/public/hooks/amtel-dispatch")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const secret = process.env.AMTEL_DISPATCH_SECRET;
+        const secret = getRuntimeSecret("AMTEL_DISPATCH_SECRET");
         if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
           return Response.json({ error: "unauthorized" }, { status: 401 });
         }
-        if (process.env.AMTEL_API_ENABLED !== "true") {
+        if (getRuntimeSecret("AMTEL_API_ENABLED") !== "true") {
           return Response.json({ error: "amtel_dispatch_disabled" }, { status: 503 });
         }
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
