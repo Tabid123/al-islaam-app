@@ -69,10 +69,27 @@ const AppSettings = () => {
     setCheckingAmtel(true);
     setAmtelResult(null);
     try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session?.access_token) {
+        setAmtelResult('No authenticated session. Log in with admin email and password; emergency PIN is not sufficient for this test.');
+        return;
+      }
+      const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin');
+      if (adminError || !isAdmin) {
+        setAmtelResult('Admin authorization failed. Use a verified admin email/password login.');
+        return;
+      }
       const result = await checkAmtel();
       setAmtelResult(result.message || `AMTEL status: ${result.state}${'resultCode' in result ? ` (code ${result.resultCode ?? 'none'})` : ''}`);
-    } catch {
-      setAmtelResult('Balance check failed. Confirm admin login and Cloudflare configuration.');
+    } catch (error: any) {
+      const msg = String(error?.message || '');
+      if (/unauthorized|token|forbidden|admin access/i.test(msg)) {
+        setAmtelResult('Authentication rejected by server. Log out and sign in again with admin email/password.');
+      } else if (/missing supabase environment/i.test(msg)) {
+        setAmtelResult('Server configuration incomplete: Supabase authentication environment is missing.');
+      } else {
+        setAmtelResult('Server function failed before confirming AMTEL connectivity. Check Cloudflare Worker logs for the request; no bundle was purchased.');
+      }
     } finally {
       setCheckingAmtel(false);
     }
