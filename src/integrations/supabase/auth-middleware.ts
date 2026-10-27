@@ -33,8 +33,9 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server(
   async ({ next }) => {
     
-    const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+    // Reuse the already-public frontend Supabase project settings when Cloudflare SSR env is absent.
+    const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "https://iwdtpouuxbzqhcqhujfv.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3ZHRwb3V1eGJ6cWhjcWh1amZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MDYxMDQsImV4cCI6MjEwNTQ4MjEwNH0.WKKJSri396pzVA4D_o-WCdfTrj-rywcqLINXU9zXFic";
 
     if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
       const missing = [
