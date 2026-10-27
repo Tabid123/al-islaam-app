@@ -123,6 +123,18 @@ serve(async (req) => {
       return json({ error: 'invalid_schedule', safe_to_retry: true }, 422);
     }
 
+    const isAmtel = normalizeProviderSlug(providerConfig.provider_name) === 'amtel';
+    let amtelEnabled = false;
+    if (isAmtel) {
+      const { data: mapping, error: mappingError } = await admin.from('amtel_package_mapping')
+        .select('enabled, offering_id, amtel_offerings!inner(amount, active)')
+        .eq('package_id', pkg.id).maybeSingle();
+      if (mappingError) throw mappingError;
+      amtelEnabled = mapping?.enabled === true && (mapping?.amtel_offerings as any)?.active === true;
+      if (amtelEnabled && Math.abs(Number(pkg.cost_price) - Number((mapping?.amtel_offerings as any)?.amount)) > 0.005) {
+        return json({ error: 'amtel_price_mismatch', message: 'Qiimaha xirmada AMTEL lama xaqiijin. Lacag lagama jarin.' }, 409);
+      }
+    }
     const isSomlink = normalizeProviderSlug(providerConfig.provider_name) === 'somlink';
     let instruction: any = null;
     let bundleCount = 0;
@@ -131,7 +143,7 @@ serve(async (req) => {
           !Number.isFinite(Number(pkg.cost_price)) || Number(pkg.cost_price) <= 0) {
         return json({ error: 'somlink_package_not_configured', message: 'Xirmadan Somlink si sax ah looma diyaarin.', safe_to_retry: true }, 409);
       }
-    } else {
+    } else if (!amtelEnabled) {
       instruction = await getDeliveryInstruction(admin, pkg.provider_id, pkg.id, pkg.category_id);
       const { count, error: bundleError } = await admin.from('package_delivery_rules')
         .select('id', { head: true, count: 'exact' }).eq('source_package_id', pkg.id).eq('is_active', true);
@@ -278,7 +290,10 @@ serve(async (req) => {
       if (claimError) throw claimError;
 
       if (claimed?.length) {
-        if (isSomlink) {
+        if (amtelEnabled) {
+          const { error } = await admin.rpc('enqueue_amtel_delivery', { p_order_id: order.id });
+          if (error) throw error;
+        } else if (isSomlink) {
           const { error } = await admin.rpc('enqueue_somlink_delivery', { p_order_id: order.id });
           if (error) throw error;
         } else {
@@ -300,7 +315,7 @@ serve(async (req) => {
       }
     }
 
-    const queued = await hasActiveDelivery(admin, order.id);
+    const queued = amtelEnabled ? !!(await admin.from('amtel_delivery_jobs').select('id').eq('order_id', order.id).limit(1).maybeSingle()).data : await hasActiveDelivery(admin, order.id);
     return json({ success: true, payment_approved: true, delivery_queued: queued,
       order_id: order.id, reference_id: tx.client_reference });
   } catch {
