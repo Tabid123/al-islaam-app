@@ -1,0 +1,43 @@
+name: AMTEL TLS diagnostic
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/amtel-tls-diagnostic.yml'
+permissions: {}
+jobs:
+  tls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check DNS and verified TLS on the documented API port
+        shell: python
+        run: |
+          import socket, ssl, subprocess, re
+          host, port = "topup.amtelevc.com", 3000
+          print("Target:", host, port, flush=True)
+          try:
+              print("DNS:", sorted({x[4][0] for x in socket.getaddrinfo(host, port)}), flush=True)
+              with socket.create_connection((host, port), timeout=20) as raw:
+                  with ssl.create_default_context().wrap_socket(raw, server_hostname=host) as tls:
+                      cert = tls.getpeercert()
+                      print("Verified TLS: PASS", tls.version(), flush=True)
+                      print("Certificate:", {k: cert.get(k) for k in ("subject", "issuer", "notBefore", "notAfter", "subjectAltName")}, flush=True)
+          except ssl.SSLCertVerificationError as error:
+              print("Verified TLS: FAIL", error.verify_code, error.verify_message, flush=True)
+          except Exception as error:
+              print("Connection check:", type(error).__name__, str(error), flush=True)
+          # Inspect the public certificate chain only. Never send HTTP or credentials.
+          try:
+              result = subprocess.run(
+                  ["openssl", "s_client", "-connect", host + ":3000", "-servername", host,
+                   "-verify_hostname", host, "-verify_return_error", "-showcerts"],
+                  input="", capture_output=True, text=True, timeout=25)
+              print("OpenSSL validation:", result.stderr, flush=True)
+              certs = re.findall(r"-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----", result.stdout, re.S)
+              for i, pem in enumerate(certs):
+                  detail = subprocess.run(["openssl", "x509", "-noout", "-subject", "-issuer", "-dates", "-ext", "subjectAltName"],
+                                          input=pem, text=True, capture_output=True, check=True)
+                  print("Public chain certificate", i, detail.stdout, flush=True)
+          except subprocess.TimeoutExpired:
+              print("OpenSSL connection timed out", flush=True)
