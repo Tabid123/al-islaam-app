@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Save } from 'lucide-react';
+import { useServerFn } from '@tanstack/react-start';
+import { checkAmtelBalance } from '@/lib/amtel.functions';
 import { toast } from 'sonner';
 
 interface AppSetting {
@@ -60,6 +62,21 @@ const TextInputSetting = ({
 
 const AppSettings = () => {
   const queryClient = useQueryClient();
+  const [checkingAmtel, setCheckingAmtel] = useState(false);
+  const [amtelResult, setAmtelResult] = useState<string | null>(null);
+  const checkAmtel = useServerFn(checkAmtelBalance);
+  const runAmtelBalanceCheck = async () => {
+    setCheckingAmtel(true);
+    setAmtelResult(null);
+    try {
+      const result = await checkAmtel();
+      setAmtelResult(result.message || `AMTEL status: ${result.state}${'resultCode' in result ? ` (code ${result.resultCode ?? 'none'})` : ''}`);
+    } catch {
+      setAmtelResult('Balance check failed. Confirm admin login and Cloudflare configuration.');
+    } finally {
+      setCheckingAmtel(false);
+    }
+  };
 
   const { data: settings = [], isLoading } = useQuery({
     queryKey: ['appSettings'],
@@ -154,6 +171,14 @@ const AppSettings = () => {
         <p className="text-muted-foreground">Maaree sida app-ka u muuqdo</p>
       </div>
 
+      <Card className="p-4 space-y-3">
+        <h3 className="font-semibold">AMTEL API — Balance Test</h3>
+        <p className="text-sm text-muted-foreground">Read-only inventory inquiry. This will not buy or send any internet bundle.</p>
+        <Button type="button" disabled={checkingAmtel} onClick={runAmtelBalanceCheck}>
+          {checkingAmtel ? 'Checking AMTEL…' : 'Test AMTEL Balance API'}
+        </Button>
+        {amtelResult && <p role="status" className="text-sm break-words">{amtelResult}</p>}
+      </Card>
       <div className="space-y-4">
         {settings.map((setting) => {
           const isTextSetting = setting.text_value !== null;
