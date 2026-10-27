@@ -1,3 +1,5 @@
+import { env } from "cloudflare:workers";
+
 /**
  * AMTEL SOAP bundle purchasing client.
  * Server-only: configure credentials in the deployment secret store.
@@ -27,16 +29,11 @@ export type AmtelSoapResult = {
   transactionId?: string;
   conversationId: string;
 };
-async function optionalSecret(name: string): Promise<string | undefined> {
-  try { const workers = await import("cloudflare:workers"); return (workers.env as Record<string,string>)[name] ?? process.env[name]; }
-  catch { return process.env[name]; }
+function optionalSecret(name: string): string | undefined {
+  return (env as Record<string, string | undefined>)[name] ?? process.env[name];
 }
-async function required(name: string): Promise<string> {
-  let value = process.env[name];
-  try {
-    const workers = await import("cloudflare:workers");
-    value = (workers.env as Record<string, string>)[name] ?? value;
-  } catch { /* local/non-Workers runtime */ }
+function required(name: string): string {
+  const value = optionalSecret(name);
   if (!value) throw new Error(`Missing AMTEL secret: ${name}`);
   return value;
 }
@@ -51,12 +48,12 @@ export async function purchaseAmtelBundle(input: AmtelBundlePurchase): Promise<A
   if (!(Number.isFinite(input.amount) && input.amount > 0)) throw new Error("Invalid bundle amount");
   if (!/^[A-Za-z0-9_-]{8,80}$/.test(input.conversationId)) throw new Error("Invalid conversation ID");
 
-  const initiator = await required("AMTEL_INITIATOR");
-  const party = await required("AMTEL_RECEIVER_PARTY");
-  const shortCode = (await optionalSecret("AMTEL_SHORT_CODE")) || initiator;
-  const thirdParty = await required("AMTEL_THIRD_PARTY_ID");
-  const password = await required("AMTEL_API_PASSWORD");
-  const securityCredential = await required("AMTEL_SECURITY_CREDENTIAL");
+  const initiator = required("AMTEL_INITIATOR");
+  const party = required("AMTEL_RECEIVER_PARTY");
+  const shortCode = optionalSecret("AMTEL_SHORT_CODE") || initiator;
+  const thirdParty = required("AMTEL_THIRD_PARTY_ID");
+  const password = required("AMTEL_API_PASSWORD");
+  const securityCredential = required("AMTEL_SECURITY_CREDENTIAL");
   const timestamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
   const E = xmlEscape;
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -107,11 +104,11 @@ export async function purchaseAmtelBundle(input: AmtelBundlePurchase): Promise<A
 
 /** Balance lookup: read-only API call, does not purchase a bundle. */
 export async function queryAmtelBalance(conversationId: string): Promise<AmtelSoapResult & { balanceXml?: string }> {
-  const initiator = await required("AMTEL_INITIATOR");
-  const shortCode = (await optionalSecret("AMTEL_SHORT_CODE")) || initiator;
-  const thirdParty = await required("AMTEL_THIRD_PARTY_ID");
-  const password = await required("AMTEL_API_PASSWORD");
-  const securityCredential = await required("AMTEL_SECURITY_CREDENTIAL");
+  const initiator = required("AMTEL_INITIATOR");
+  const shortCode = optionalSecret("AMTEL_SHORT_CODE") || initiator;
+  const thirdParty = required("AMTEL_THIRD_PARTY_ID");
+  const password = required("AMTEL_API_PASSWORD");
+  const securityCredential = required("AMTEL_SECURITY_CREDENTIAL");
   const timestamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
   if (!/^[A-Za-z0-9_-]{8,80}$/.test(conversationId)) throw new Error("Invalid conversation ID");
   const E = xmlEscape;
