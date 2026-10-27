@@ -12,6 +12,9 @@ export const Route = createFileRoute("/api/public/hooks/amtel-dispatch")({
         if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
           return Response.json({ error: "unauthorized" }, { status: 401 });
         }
+        if (process.env.AMTEL_API_ENABLED !== "true") {
+          return Response.json({ error: "amtel_dispatch_disabled" }, { status: 503 });
+        }
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { purchaseAmtelBundle } = await import("@/lib/amtel.server");
         const { data: jobs, error } = await supabaseAdmin.from("amtel_delivery_jobs")
