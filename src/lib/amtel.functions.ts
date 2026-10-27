@@ -5,8 +5,14 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const checkAmtelBalance = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: isAdmin, error } = await context.supabase.rpc("is_admin");
-    if (error || !isAdmin) throw new Error("Admin access required");
+    const { data: role, error } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .in("role", ["admin", "super_admin"])
+      .limit(1)
+      .maybeSingle();
+    if (error || !role) throw new Error("Admin access required");
     if (process.env.AMTEL_BALANCE_TEST_ENABLED !== "true") {
       return { state: "disabled" as const, message: "AMTEL balance test is disabled." };
     }
