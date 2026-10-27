@@ -6,17 +6,6 @@
   "compatibility_date": "2026-10-05",
   "compatibility_flags": ["nodejs_compat"],
   "keep_vars": true,
-  "secrets": {
-    "required": [
-      "AMTEL_API_PASSWORD",
-      "AMTEL_INITIATOR",
-      "AMTEL_RECEIVER_PARTY",
-      "AMTEL_SECURITY_CREDENTIAL",
-      "AMTEL_SHORT_CODE",
-      "AMTEL_THIRD_PARTY_ID",
-      "AMTEL_DISPATCH_SECRET"
-    ]
-  },
   "assets": {
     "directory": ".output/public"
   },
