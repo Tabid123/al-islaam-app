@@ -13,16 +13,8 @@ export const checkAmtelBalance = createServerFn({ method: "POST" })
       .limit(1)
       .maybeSingle();
     if (error || !role) throw new Error("Admin access required");
-    // In Cloudflare Workers, bindings may be available through cloudflare:workers even
-    // when Nitro does not populate process.env for server functions.
-    let flag = process.env.AMTEL_BALANCE_TEST_ENABLED;
-    try {
-      const workers = await import("cloudflare:workers");
-      flag = (workers.env as Record<string, string>).AMTEL_BALANCE_TEST_ENABLED ?? flag;
-    } catch { /* Non-Cloudflare runtime: use process.env */ }
-    if (flag?.trim().toLowerCase() !== "true") {
-      return { state: "disabled" as const, message: "AMTEL balance test is disabled." };
-    }
+    // This is a read-only inventory inquiry, already restricted to authenticated admins.
+    // Do not depend on the optional dispatcher feature flag used for purchases.
     const { queryAmtelBalance } = await import("./amtel.server");
     const id = "BAL_" + crypto.randomUUID().replace(/-/g, "");
     const response = await queryAmtelBalance(id);
