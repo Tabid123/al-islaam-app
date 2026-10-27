@@ -1,6 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
-import { getRuntimeSecret } from "./runtimeEnv.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 /** An admin-initiated inventory inquiry, never a bundle purchase. */
@@ -18,6 +16,8 @@ export const checkAmtelBalance = createServerFn({ method: "POST" })
     // This is a read-only inventory inquiry, already restricted to authenticated admins.
     // Do not depend on the optional dispatcher feature flag used for purchases.
     const { queryAmtelBalance } = await import("./amtel.server");
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const { getRuntimeSecret } = await import("./runtimeEnv.server");
     const id = "BAL_" + crypto.randomUUID().replace(/-/g, "");
     let response;
     try {
