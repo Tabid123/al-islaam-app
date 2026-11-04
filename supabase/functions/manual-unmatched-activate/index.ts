@@ -121,6 +121,16 @@ serve(async (req) => {
     if (roleError) throw roleError;
     if (!role) return respond({ success: false, error: "Admin access required" }, 403);
 
+    // Match the dashboard's legacy permission rule: no explicit permission
+    // rows means full access, otherwise manage_orders is required.
+    const { data: permissions, error: permissionError } = await db.from("admin_permissions")
+      .select("permission_key").eq("user_id", auth.user.id);
+    if (permissionError) throw permissionError;
+    if (role.role !== "super_admin" && permissions?.length &&
+        !permissions.some((p: any) => p.permission_key === "manage_orders")) {
+      return respond({ success: false, error: "Manage orders permission required" }, 403);
+    }
+
     const { orderId, providerName, receiverPhone } = await req.json();
     if (!uuid(orderId)) return respond({ success: false, error: "Order ID ma saxna." });
     const { data: order, error: orderError } = await db.from("orders")
