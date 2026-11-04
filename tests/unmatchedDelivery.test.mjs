@@ -5,12 +5,12 @@ import { queueUnmatchedDelivery } from '../src/lib/unmatchedDelivery.ts';
 const input = () => ({
   payment: { id: 'receipt-1', tx_id: 'carrier-transaction-1', sender_phone: '252619999999' },
   receiverPhone: '626880252', providerId: 'somtel-id', providerName: 'Somtel',
-  pkg: { id: 'package-1', package_name: 'Unlimited data & voice', data_amount: 'internet kaliya', selling_price: 0.18 },
+  pkg: { id: 'package-1', package_name: 'Unlimited data & voice', data_amount: 'internet kaliya', selling_price: 0.18, cost_price: 0.15 },
 });
 
 function fixture() {
   const db = { payment_receipts: [{ id: 'receipt-1', status: 'unmatched', matched_order_id: null }], orders: [], delivery_queue: [] };
-  const state = { calls: [], activationError: null, invalidQueue: false, failReceiptUpdate: false, loseActivationReply: false };
+  const state = { calls: [], activationError: null, invalidQueue: false, failReceiptUpdate: false, loseActivationReply: false, route: 'ussd' };
   const client = {
     from(table) {
       let action = 'read', payload, single = false;
@@ -55,12 +55,19 @@ function fixture() {
     },
     functions: { async invoke(name, { body }) {
       state.calls.push('activate');
-      assert.equal(name, 'activate-package');
+      assert.equal(name, 'manual-unmatched-activate');
       assert.deepEqual(body, { orderId: 'order-1', providerName: 'Somtel', receiverPhone: '626880252' });
       if (state.activationError) return { data: null, error: state.activationError };
-      db.delivery_queue.push({ id: `queue-${db.delivery_queue.length + 1}`, order_id: body.orderId, status: 'pending', ussd_code: state.invalidQueue ? null : '*831*626880252*0*20#', dispatched_at: null });
+      if (state.route === 'amtel') {
+        return { data: { success: true, route: 'amtel', queueId: 'amtel-job-1' }, error: null };
+      }
+      db.delivery_queue.push({
+        id: `queue-${db.delivery_queue.length + 1}`, order_id: body.orderId,
+        status: 'pending', ussd_code: state.invalidQueue || state.route === 'somlink' ? null : '*831*626880252*0*20#',
+        dispatched_at: null,
+      });
       if (state.loseActivationReply) return { data: null, error: new Error('Network response lost') };
-      return { data: { success: true, queueId: db.delivery_queue.at(-1).id }, error: null };
+      return { data: { success: true, route: state.route, queueId: db.delivery_queue.at(-1).id }, error: null };
     } },
   };
   return { db, state, client };
@@ -103,7 +110,7 @@ test('lost activation response recovers the existing queue without resending', a
   assert.equal(f.state.calls.filter(x => x === 'activate').length, 1);
 });
 
-test('legacy bare pending queue is removed and rebuilt through activate-package', async () => {
+test('legacy bare pending queue is removed and rebuilt through manual activation', async () => {
   const f = fixture();
   f.db.orders.push({
     id: 'order-1', tx_id: 'carrier-transaction-1', package_id: 'package-1', provider_id: 'somtel-id',
@@ -184,4 +191,34 @@ test('already-matched receipts and invalid phones never activate', async () => {
   await assert.rejects(queueUnmatchedDelivery(f.client, invalid), /lambar sax ah/);
   assert.equal(f.db.orders.length, 0);
   assert.ok(!f.state.calls.includes('activate'));
+});
+
+test('Somlink code-less queue is valid and is not deleted on the next retry', async () => {
+  const f = fixture();
+  f.state.route = 'somlink';
+  const i = input(); i.providerId = 'somlink-id'; i.providerName = 'Somlink';
+  await queueUnmatchedDelivery(f.client, i);
+  assert.equal(f.db.payment_receipts[0].status, 'matched');
+  assert.equal(f.db.delivery_queue.length, 1);
+  assert.equal(f.db.delivery_queue[0].ussd_code, null);
+  assert.equal(f.state.calls.filter(x => x === 'activate').length, 1);
+});
+
+test('Amtel API job can mark the receipt matched without a USSD queue', async () => {
+  const f = fixture();
+  f.state.route = 'amtel';
+  const i = input(); i.providerId = 'amtel-id'; i.providerName = 'Amtel';
+  await queueUnmatchedDelivery(f.client, i);
+  assert.equal(f.db.payment_receipts[0].status, 'matched');
+  assert.equal(f.db.delivery_queue.length, 0);
+  assert.equal(f.db.orders[0].cost_price, 0.15);
+});
+
+test('Amtel job creation failure does not mark a receipt matched', async () => {
+  const f = fixture();
+  f.state.route = 'amtel';
+  f.state.activationError = new Error('AMTEL mapping disabled');
+  const i = input(); i.providerId = 'amtel-id'; i.providerName = 'Amtel';
+  await assert.rejects(queueUnmatchedDelivery(f.client, i), /AMTEL mapping disabled/);
+  assert.equal(f.db.payment_receipts[0].status, 'unmatched');
 });
