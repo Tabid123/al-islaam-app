@@ -203,7 +203,7 @@ const UnmatchedPayments = () => {
     if (!pickerOpen || !pickerProviderId) { setPickerPackages([]); return; }
     setPickerLoading(true);
     supabase.from('data_packages_config')
-      .select('id, package_name, data_amount, selling_price, validity_days, provider_id, category_id')
+      .select('id, package_name, data_amount, selling_price, cost_price, validity_days, provider_id, category_id')
       .eq('provider_id', pickerProviderId)
       .eq('is_active', true)
       .order('selling_price', { ascending: true })
