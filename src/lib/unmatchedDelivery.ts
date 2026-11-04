@@ -5,7 +5,7 @@ type DeliveryInput = {
   receiverPhone: string;
   providerId: string;
   providerName: string;
-  pkg: { id: string; package_name: string; data_amount: string; selling_price: number | string };
+  pkg: { id: string; package_name: string; data_amount: string; selling_price: number | string; cost_price?: number | string | null };
 };
 
 type DeliveryClient = {
@@ -59,6 +59,8 @@ async function queueReceipt(client: DeliveryClient, input: DeliveryInput): Promi
       package_name: pkg.package_name,
       data_amount: pkg.data_amount,
       selling_price: pkg.selling_price,
+      // Keep the purchase-cost snapshot for profit accounting and Amtel API checks.
+      cost_price: pkg.cost_price == null ? null : Number(pkg.cost_price),
       status: 'payment_confirmed',
       delivery_status: 'pending',
       payment_source: 'offline_unmatched_retry',
@@ -95,7 +97,7 @@ async function queueReceipt(client: DeliveryClient, input: DeliveryInput): Promi
 
   // Legacy Unmatched → Dib u Dir created a bare pending queue row with no
   // ussd_code. It was never dispatchable. Remove ONLY that known-safe stale row
-  // (pending/scheduled + never dispatched + empty code) so activate-package can
+  // (pending/scheduled + never dispatched + empty code) so the manual activation endpoint can
   // rebuild the delivery from the authoritative package/provider instructions.
   // Any processing/completed/verification_required/dispatched row is ambiguous
   // and must never be reset or replaced automatically.
@@ -136,7 +138,7 @@ async function queueReceipt(client: DeliveryClient, input: DeliveryInput): Promi
       throw new Error('Dalabkan hore ayaa loo gaarsiiyey; hubi diiwaanka delivery-ga.');
     }
 
-    // activate-package resolves Package > Category > Provider instructions,
+    // The manual activation function resolves Package > Category > Provider instructions,
     // formats the actual package cost, substitutes receiver/PIN and queues it.
     const { data, error } = await client.functions.invoke('manual-unmatched-activate', {
       body: { orderId: order.id, providerName, receiverPhone },
