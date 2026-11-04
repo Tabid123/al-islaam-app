@@ -424,7 +424,7 @@ const SimpleAdminDashboard = () => {
   };
 
   const statCards = [
-    { label: `Dalabyada ${periodLabel}`, value: stats.todayOrderCount, sub: `${stats.todayFailed} fashilmay · ${stats.todayPending} sugaya`, color: 'from-teal-400 to-teal-600', darkFooter: 'bg-teal-700', link: '/simple-admin/daily-orders' },
+    { label: 'All transactions', value: stats.todayOrderCount, sub: `${stats.todayFailed} fashilmay · ${stats.todayPending} sugaya`, color: 'from-teal-400 to-teal-600', darkFooter: 'bg-teal-700', link: '/simple-admin/daily-orders' },
     { label: `Dakhliga ${periodLabel}`, value: `$${stats.todaySales.toFixed(2)}`, sub: `${stats.todayDelivered} dalab la diray`, color: 'from-red-500 to-red-600', darkFooter: 'bg-red-700', link: '/simple-admin/transactions' },
     { label: `Faaidada ${periodLabel}`, value: `$${stats.todayProfit.toFixed(2)}`, sub: `Qarash: $${stats.todayCost.toFixed(2)}`, color: 'from-green-500 to-green-700', darkFooter: 'bg-green-800', link: '/simple-admin/transactions' },
     { label: 'Unmatched', value: alertCount, sub: `${stats.unmatchedCount} unmatched · ${stats.todayFailed} fashilmay`, color: alertActive ? 'from-red-600 to-red-800' : 'from-blue-500 to-blue-700', darkFooter: alertActive ? 'bg-red-900' : 'bg-blue-800', link: '/simple-admin/unmatched', isAlert: true },
@@ -547,21 +547,21 @@ const SimpleAdminDashboard = () => {
               ))}
             </div>
 
-            {/* Blocked Users & SMS Cards */}
+            {/* Dashboard shortcuts only — existing sidebar tabs remain unchanged. */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg overflow-hidden shadow-md cursor-pointer active:scale-95 transition-transform" onClick={() => navigate('/simple-admin/blocked')}>
+              <div className="rounded-lg overflow-hidden shadow-md cursor-pointer active:scale-95 transition-transform" onClick={() => navigate('/simple-admin/failed')}>
                 <div className="bg-gradient-to-br from-gray-600 to-gray-800 text-white p-4 text-center">
-                  <div className="text-3xl font-bold">🚫</div>
-                  <div className="text-sm mt-1 opacity-90">Blocked Users</div>
+                  <div className="text-3xl font-bold">{stats.failed}</div>
+                  <div className="text-sm mt-1 opacity-90">Failed</div>
                 </div>
                 <div className="bg-gray-900 text-white text-center py-2 text-xs flex items-center justify-center gap-1">
                   <span>➡</span> More Info
                 </div>
               </div>
-              <div className="rounded-lg overflow-hidden shadow-md cursor-pointer active:scale-95 transition-transform" onClick={() => navigate('/simple-admin/sms-logs')}>
+              <div className="rounded-lg overflow-hidden shadow-md cursor-pointer active:scale-95 transition-transform" onClick={() => navigate('/simple-admin/sms-lacago')}>
                 <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 text-white p-4 text-center">
-                  <div className="text-3xl font-bold">💬</div>
-                  <div className="text-sm mt-1 opacity-90">SMS Logs</div>
+                  <div className="text-3xl font-bold">💰</div>
+                  <div className="text-sm mt-1 opacity-90">SMS Lacago</div>
                 </div>
                 <div className="bg-indigo-950 text-white text-center py-2 text-xs flex items-center justify-center gap-1">
                   <span>➡</span> More Info
