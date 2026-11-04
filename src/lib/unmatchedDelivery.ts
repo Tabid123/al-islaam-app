@@ -25,6 +25,8 @@ export function queueUnmatchedDelivery(client: DeliveryClient, input: DeliveryIn
 
 async function queueReceipt(client: DeliveryClient, input: DeliveryInput): Promise<string> {
   const { payment, receiverPhone, providerId, providerName, pkg } = input;
+  const isSomlink = providerName.trim().toLowerCase() === 'somlink';
+  const isAmtel = providerName.trim().toLowerCase() === 'amtel';
   if (!/^\d{9}$/.test(receiverPhone) || !providerName || !providerId || !pkg.id) {
     throw new Error('Dooro shirkad, xirmo iyo lambar sax ah.');
   }
@@ -98,14 +100,18 @@ async function queueReceipt(client: DeliveryClient, input: DeliveryInput): Promi
   // Any processing/completed/verification_required/dispatched row is ambiguous
   // and must never be reset or replaced automatically.
   const allowedQueueStatuses = ['pending', 'scheduled', 'processing', 'completed'];
+  const validQueue = (q: any) =>
+    allowedQueueStatuses.includes(q.status) &&
+    (isSomlink ? !String(q.ussd_code || '').trim() : !!String(q.ussd_code || '').trim());
   const staleBareQueues = (queues || []).filter((q: any) =>
+    !isSomlink &&
     !String(q.ussd_code || '').trim() &&
     !q.dispatched_at &&
     ['pending', 'scheduled'].includes(q.status)
   );
   const ambiguousQueues = (queues || []).filter((q: any) =>
     !staleBareQueues.includes(q) &&
-    (!String(q.ussd_code || '').trim() || !allowedQueueStatuses.includes(q.status))
+    !validQueue(q)
   );
 
   if (ambiguousQueues.length) {
@@ -122,9 +128,8 @@ async function queueReceipt(client: DeliveryClient, input: DeliveryInput): Promi
     queues = refreshed.data;
   }
 
-  const validExistingQueue = (queues || []).find((q: any) =>
-    String(q.ussd_code || '').trim() && allowedQueueStatuses.includes(q.status)
-  );
+  const validExistingQueue = (queues || []).find(validQueue);
+  let amtelJobQueued = false;
 
   if (!validExistingQueue) {
     if (order.delivery_status === 'delivered') {
@@ -133,7 +138,7 @@ async function queueReceipt(client: DeliveryClient, input: DeliveryInput): Promi
 
     // activate-package resolves Package > Category > Provider instructions,
     // formats the actual package cost, substitutes receiver/PIN and queues it.
-    const { data, error } = await client.functions.invoke('activate-package', {
+    const { data, error } = await client.functions.invoke('manual-unmatched-activate', {
       body: { orderId: order.id, providerName, receiverPhone },
     });
     if (error) throw error;
@@ -141,15 +146,19 @@ async function queueReceipt(client: DeliveryClient, input: DeliveryInput): Promi
       throw new Error(data?.error || 'Delivery queue lama diyaarin. Receipt-ku weli waa unmatched.');
     }
 
-    const checked = await readQueues();
-    if (checked.error) throw checked.error;
-    queues = checked.data;
+    if (data.route === 'amtel' && isAmtel) {
+      // Amtel is delivered by its API job table, not by the USSD delivery_queue.
+      amtelJobQueued = true;
+    } else {
+      const checked = await readQueues();
+      if (checked.error) throw checked.error;
+      queues = checked.data;
+    }
   }
 
   // A network retry may find the original queue already processing/completed.
   // Reuse it; never reset it or create a replacement for an ambiguous delivery.
-  if (!queues?.length || !queues.some((q: any) =>
-    String(q.ussd_code || '').trim() && allowedQueueStatuses.includes(q.status))) {
+  if (!amtelJobQueued && (!queues?.length || !queues.some(validQueue))) {
     throw new Error('Delivery-gu wuxuu u baahan yahay hubin; code ma jiro ama natiijadu ma cadda.');
   }
 
