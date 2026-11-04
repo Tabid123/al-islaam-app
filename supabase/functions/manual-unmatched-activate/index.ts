@@ -222,14 +222,15 @@ serve(async (req) => {
     }
     if (!items.length || items.length > 24) throw new Error("Delivery steps-ka ayaa badan ama ma jiraan.");
 
-    // One insert operation, so a malformed configured bundle cannot partially
-    // queue a purchase. The frontend separately deduplicates the receipt.
-    const { data: rows, error: insertError } = await db.from("delivery_queue")
-      .insert(items).select("id,ussd_code");
-    if (insertError) throw insertError;
-    const first = rows?.[0];
-    if (!first?.id || !first.ussd_code) throw new Error("Safkii dirista lama xaqiijin.");
-    return respond({ success: true, route: "ussd", queueId: first.id });
+    // The database row-locks the order and atomically inserts the full bundle.
+    // Two admins retrying the same receipt cannot create duplicate USSD charges.
+    const { data: queued, error: queueError } = await db.rpc(
+      "enqueue_manual_unmatched_ussd",
+      { p_order_id: order.id, p_items: items },
+    );
+    if (queueError) throw queueError;
+    if (!queued?.success || !queued.queueId) throw new Error("Safkii dirista lama xaqiijin.");
+    return respond({ ...queued, route: "ussd" });
   } catch (error) {
     console.error("manual-unmatched-activate error", error);
     return respond({ success: false, error: error instanceof Error ? error.message : "Delivery error" });
