@@ -56,7 +56,11 @@ function fixture() {
     functions: { async invoke(name, { body }) {
       state.calls.push('activate');
       assert.equal(name, 'manual-unmatched-activate');
-      assert.deepEqual(body, { orderId: 'order-1', providerName: 'Somtel', receiverPhone: '626880252' });
+      assert.deepEqual(body, {
+        orderId: 'order-1',
+        providerName: state.route === 'somlink' ? 'Somlink' : state.route === 'amtel' ? 'Amtel' : 'Somtel',
+        receiverPhone: '626880252',
+      });
       if (state.activationError) return { data: null, error: state.activationError };
       if (state.route === 'amtel') {
         return { data: { success: true, route: 'amtel', queueId: 'amtel-job-1' }, error: null };
