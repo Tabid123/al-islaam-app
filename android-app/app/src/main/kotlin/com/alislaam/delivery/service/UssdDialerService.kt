@@ -1830,9 +1830,11 @@ class UssdDialerService : Service() {
                         android.util.Log.w("UssdDialer", "⚠️ System noise captured - not a carrier response")
                     }
                     else -> {
-                        detectedStatus = "completed"
+                        // A non-empty carrier message is NOT proof of delivery.
+                        // Only a verified success response may complete a paid order.
+                        detectedStatus = "processing"
                         detectedError = null
-                        android.util.Log.d("UssdDialer", "✅ Unknown response text - assuming success")
+                        android.util.Log.w("UssdDialer", "⚠️ Unrecognized carrier response; awaiting verification, not assuming success")
                     }
                 }
                 
@@ -1843,9 +1845,13 @@ class UssdDialerService : Service() {
                     providerResponse = providerResponse
                 )
                 database.deliveryTaskDao().updateStatus(order.id, detectedStatus)
-                if (statusUpdated && detectedStatus != "processing") {
-                    updateStats(success = detectedStatus == "completed")
+                if (statusUpdated) {
+                    if (detectedStatus != "processing") {
+                        updateStats(success = detectedStatus == "completed")
+                    }
                 } else {
+                    // Never replay a successfully acknowledged processing update:
+                    // a delayed replay could extend a lease or obscure a final result.
                     saveToOfflineQueue(order.id, detectedStatus, detectedError, providerResponse)
                 }
                 android.util.Log.d("UssdDialer", "📊 Order ${order.orderId} reported as $detectedStatus")
