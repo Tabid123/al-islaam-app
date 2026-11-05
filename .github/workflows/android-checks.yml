@@ -22,9 +22,6 @@ jobs:
           java-version: '17'
           cache: gradle
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Make Gradle executable
         run: chmod +x gradlew
         working-directory: android-app
@@ -32,3 +29,10 @@ jobs:
       - name: Compile debug APK
         run: ./gradlew assembleDebug --stacktrace
         working-directory: android-app
+
+      - name: Upload debug APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: al-islaam-sim-selection-debug-apk
+          path: android-app/app/build/outputs/apk/debug/*.apk
