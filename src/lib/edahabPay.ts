@@ -1,3 +1,4 @@
+// CI verification: eDahab/Cloudflare build
 import { supabase } from '@/integrations/supabase/client';
 
 type EdahabPurchaseInput = {
