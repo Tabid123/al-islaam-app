@@ -11,7 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SplatRouteImport } from './routes/$'
+import { Route as ApiPublicAmtelBalanceTestRouteImport } from './routes/api/public/amtel-balance-test'
+import { Route as ApiPublicAmtelReadinessRouteImport } from './routes/api/public/amtel-readiness'
 import { Route as ApiPublicSomlinkStatusRouteImport } from './routes/api/public/somlink-status'
+import { Route as ApiPublicHooksAmtelDispatchRouteImport } from './routes/api/public/hooks/amtel-dispatch'
 import { Route as ApiPublicHooksSomlinkDispatchRouteImport } from './routes/api/public/hooks/somlink-dispatch'
 import { Route as ApiPublicHooksUssdRouteImport } from './routes/api/public/hooks/ussd'
 
@@ -25,11 +28,28 @@ const SplatRoute = SplatRouteImport.update({
   path: '/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAmtelBalanceTestRoute =
+  ApiPublicAmtelBalanceTestRouteImport.update({
+    id: '/api/public/amtel-balance-test',
+    path: '/api/public/amtel-balance-test',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicAmtelReadinessRoute = ApiPublicAmtelReadinessRouteImport.update({
+  id: '/api/public/amtel-readiness',
+  path: '/api/public/amtel-readiness',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSomlinkStatusRoute = ApiPublicSomlinkStatusRouteImport.update({
   id: '/api/public/somlink-status',
   path: '/api/public/somlink-status',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksAmtelDispatchRoute =
+  ApiPublicHooksAmtelDispatchRouteImport.update({
+    id: '/api/public/hooks/amtel-dispatch',
+    path: '/api/public/hooks/amtel-dispatch',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksSomlinkDispatchRoute =
   ApiPublicHooksSomlinkDispatchRouteImport.update({
     id: '/api/public/hooks/somlink-dispatch',
@@ -45,14 +65,20 @@ const ApiPublicHooksUssdRoute = ApiPublicHooksUssdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/api/public/amtel-balance-test': typeof ApiPublicAmtelBalanceTestRoute
+  '/api/public/amtel-readiness': typeof ApiPublicAmtelReadinessRoute
   '/api/public/somlink-status': typeof ApiPublicSomlinkStatusRoute
+  '/api/public/hooks/amtel-dispatch': typeof ApiPublicHooksAmtelDispatchRoute
   '/api/public/hooks/somlink-dispatch': typeof ApiPublicHooksSomlinkDispatchRoute
   '/api/public/hooks/ussd': typeof ApiPublicHooksUssdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/api/public/amtel-balance-test': typeof ApiPublicAmtelBalanceTestRoute
+  '/api/public/amtel-readiness': typeof ApiPublicAmtelReadinessRoute
   '/api/public/somlink-status': typeof ApiPublicSomlinkStatusRoute
+  '/api/public/hooks/amtel-dispatch': typeof ApiPublicHooksAmtelDispatchRoute
   '/api/public/hooks/somlink-dispatch': typeof ApiPublicHooksSomlinkDispatchRoute
   '/api/public/hooks/ussd': typeof ApiPublicHooksUssdRoute
 }
@@ -60,7 +86,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/api/public/amtel-balance-test': typeof ApiPublicAmtelBalanceTestRoute
+  '/api/public/amtel-readiness': typeof ApiPublicAmtelReadinessRoute
   '/api/public/somlink-status': typeof ApiPublicSomlinkStatusRoute
+  '/api/public/hooks/amtel-dispatch': typeof ApiPublicHooksAmtelDispatchRoute
   '/api/public/hooks/somlink-dispatch': typeof ApiPublicHooksSomlinkDispatchRoute
   '/api/public/hooks/ussd': typeof ApiPublicHooksUssdRoute
 }
@@ -69,21 +98,30 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$'
+    | '/api/public/amtel-balance-test'
+    | '/api/public/amtel-readiness'
     | '/api/public/somlink-status'
+    | '/api/public/hooks/amtel-dispatch'
     | '/api/public/hooks/somlink-dispatch'
     | '/api/public/hooks/ussd'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/$'
+    | '/api/public/amtel-balance-test'
+    | '/api/public/amtel-readiness'
     | '/api/public/somlink-status'
+    | '/api/public/hooks/amtel-dispatch'
     | '/api/public/hooks/somlink-dispatch'
     | '/api/public/hooks/ussd'
   id:
     | '__root__'
     | '/'
     | '/$'
+    | '/api/public/amtel-balance-test'
+    | '/api/public/amtel-readiness'
     | '/api/public/somlink-status'
+    | '/api/public/hooks/amtel-dispatch'
     | '/api/public/hooks/somlink-dispatch'
     | '/api/public/hooks/ussd'
   fileRoutesById: FileRoutesById
@@ -91,7 +129,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
+  ApiPublicAmtelBalanceTestRoute: typeof ApiPublicAmtelBalanceTestRoute
+  ApiPublicAmtelReadinessRoute: typeof ApiPublicAmtelReadinessRoute
   ApiPublicSomlinkStatusRoute: typeof ApiPublicSomlinkStatusRoute
+  ApiPublicHooksAmtelDispatchRoute: typeof ApiPublicHooksAmtelDispatchRoute
   ApiPublicHooksSomlinkDispatchRoute: typeof ApiPublicHooksSomlinkDispatchRoute
   ApiPublicHooksUssdRoute: typeof ApiPublicHooksUssdRoute
 }
@@ -112,11 +153,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/amtel-balance-test': {
+      id: '/api/public/amtel-balance-test'
+      path: '/api/public/amtel-balance-test'
+      fullPath: '/api/public/amtel-balance-test'
+      preLoaderRoute: typeof ApiPublicAmtelBalanceTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/amtel-readiness': {
+      id: '/api/public/amtel-readiness'
+      path: '/api/public/amtel-readiness'
+      fullPath: '/api/public/amtel-readiness'
+      preLoaderRoute: typeof ApiPublicAmtelReadinessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/somlink-status': {
       id: '/api/public/somlink-status'
       path: '/api/public/somlink-status'
       fullPath: '/api/public/somlink-status'
       preLoaderRoute: typeof ApiPublicSomlinkStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/amtel-dispatch': {
+      id: '/api/public/hooks/amtel-dispatch'
+      path: '/api/public/hooks/amtel-dispatch'
+      fullPath: '/api/public/hooks/amtel-dispatch'
+      preLoaderRoute: typeof ApiPublicHooksAmtelDispatchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/somlink-dispatch': {
@@ -139,7 +201,10 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
+  ApiPublicAmtelBalanceTestRoute: ApiPublicAmtelBalanceTestRoute,
+  ApiPublicAmtelReadinessRoute: ApiPublicAmtelReadinessRoute,
   ApiPublicSomlinkStatusRoute: ApiPublicSomlinkStatusRoute,
+  ApiPublicHooksAmtelDispatchRoute: ApiPublicHooksAmtelDispatchRoute,
   ApiPublicHooksSomlinkDispatchRoute: ApiPublicHooksSomlinkDispatchRoute,
   ApiPublicHooksUssdRoute: ApiPublicHooksUssdRoute,
 }
