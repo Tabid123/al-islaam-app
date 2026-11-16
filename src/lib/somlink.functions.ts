@@ -23,9 +23,11 @@ export const sendManualSomlink = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { packageId: string; receiverPhone: string; note?: string }) => {
     if (!data?.packageId) throw new Error("packageId is required");
-    const receiver = (data?.receiverPhone || "").replace(/\D/g, "");
-    if (receiver.length < 9) throw new Error("Lambar sax ah geli");
-    return { packageId: data.packageId, receiverPhone: receiver, note: data.note || "" };
+    const digits = (data?.receiverPhone || "").replace(/\D/g, "");
+    const receiver = digits.startsWith("252") ? digits.slice(3) : digits;
+    // The Somlink API accepts 64xxxxxxx, never a different provider's number.
+    if (!/^64\d{7}$/.test(receiver)) throw new Error("Somlink wuxuu aqbalaa 64XXXXXXX oo keliya");
+    return { packageId: data.packageId, receiverPhone: receiver, note: (data.note || "").slice(0, 300) };
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -38,10 +40,18 @@ export const sendManualSomlink = createServerFn({ method: "POST" })
     const { data: pkg, error: pkgErr } = await supabaseAdmin
       .from("data_packages_config")
       .select("id, package_name, data_amount, selling_price, cost_price, provider_id, somlink_bundle_id")
-      .eq("id", data.packageId)
+      .eq("id", data.packageId).eq("is_active", true)
+      .eq("is_discovery_root", false)
+      .gt("cost_price", 0).gt("selling_price", 0.01)
       .single();
     if (pkgErr || !pkg) throw new Error("Xirmada lama helin");
-    if (!pkg.somlink_bundle_id) throw new Error("Xirmadan Somlink bundle id ma leh");
+    if (!pkg.somlink_bundle_id || Number(pkg.somlink_bundle_id) <= 0) throw new Error("Xirmadan Somlink bundle id ma leh");
+    const { data: provider, error: providerErr } = await supabaseAdmin
+      .from("providers_config").select("provider_name,is_active")
+      .eq("id", pkg.provider_id).single();
+    if (providerErr || provider?.provider_name?.trim().toLowerCase() !== "somlink" || provider.is_active === false) {
+      throw new Error("Xirmadani ma aha Somlink active ah");
+    }
 
     const { data: order, error: orderErr } = await supabaseAdmin
       .from("orders")
