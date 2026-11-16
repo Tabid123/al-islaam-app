@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { AddManualDeliveryDialog } from '@/components/admin/AddManualDeliveryDialog';
+import { SomlinkDashboardDevice } from '@/components/admin/SomlinkDashboardDevice';
 import { useAdminPermissions } from '@/hooks/useAdminPermissions';
 import { ReversalAlertsHeader } from '@/components/admin/ReversalAlertsHeader';
 import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
@@ -579,7 +580,7 @@ const SimpleAdminDashboard = () => {
               </div>
 
               {deviceCards.length === 0 && !loading && (
-                <p className="text-center text-gray-400 text-sm py-4">Wax device ah lama helin</p>
+                <p className="text-center text-gray-400 text-sm py-2">Wax Android device ah lama helin</p>
               )}
 
               <div className="grid grid-cols-2 gap-2">
@@ -677,6 +678,7 @@ const SimpleAdminDashboard = () => {
                     </div>
                   );
                 })}
+                <SomlinkDashboardDevice isSo={isSo} />
               </div>
 
               {/* Wadarta Lacagta - Total Balances Summary */}
