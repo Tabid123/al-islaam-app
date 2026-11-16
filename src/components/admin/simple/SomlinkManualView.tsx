@@ -111,17 +111,19 @@ export function SomlinkManualView({ isSo, embedded = false, onSuccess }: { isSo:
   return (
     <div className={embedded ? "space-y-3" : "p-4 space-y-4"}>
       <div className={embedded ? "space-y-3" : "bg-white dark:bg-gray-800 rounded-xl shadow p-4 space-y-4"}>
-        <div className="flex items-center gap-2">
-          <Zap className="h-5 w-5 text-green-600" />
-          <h2 className="font-bold text-gray-900 dark:text-white">
-            {isSo ? 'Somlink — Dalab Manual ah' : 'Somlink — Manual Send'}
-          </h2>
-        </div>
-        <p className="text-sm text-gray-500">
-          {isSo
-            ? 'Halkan waxaad si toos ah ugu diri kartaa xirmo Somlink ah adigoon device u baahnayn.'
-            : 'Send a Somlink bundle directly through the API — no Android device needed.'}
-        </p>
+        {!embedded && (
+          <>
+            <div className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-green-600" />
+              <h2 className="font-bold text-gray-900 dark:text-white">
+                {isSo ? 'Somlink — Dalab Manual ah' : 'Somlink — Manual Send'}
+              </h2>
+            </div>
+            <p className="text-sm text-gray-500">
+              {isSo ? 'Dooro category, kadib xirmada iyo lambar 64XXXXXXX.' : 'Choose category, bundle and 64XXXXXXX recipient.'}
+            </p>
+          </>
+        )}
 
         <div className="space-y-1">
           <label htmlFor="somlink-manual-category" className="text-sm font-medium">Category</label>
@@ -150,8 +152,8 @@ export function SomlinkManualView({ isSo, embedded = false, onSuccess }: { isSo:
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-medium">{isSo ? 'Lambarka helaya' : 'Receiver phone'}</label>
-          <input
+          <label htmlFor="somlink-manual-recipient" className="text-sm font-medium">{isSo ? 'Lambarka helaya' : 'Receiver phone'} · 64XXXXXXX</label>
+          <input id="somlink-manual-recipient" type="tel" maxLength={16}
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             inputMode="numeric"
