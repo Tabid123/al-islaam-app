@@ -31,5 +31,8 @@ jobs:
       - name: Run unmatched delivery regression tests
         run: node --experimental-strip-types --test tests/unmatchedDelivery.test.mjs
 
+      - name: Verify Somlink manual dashboard and category filters
+        run: node --test tests/somlinkManualDashboard.test.mjs
+
       - name: Build frontend
         run: bun run build
