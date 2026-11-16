@@ -2,6 +2,11 @@ name: Publish Al-islaam
 run-name: Publish Al-islaam on Cloudflare
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - '.github/workflows/publish-cloudflare.yml'
   workflow_dispatch:
 
 permissions: {}
