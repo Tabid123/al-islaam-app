@@ -22,8 +22,13 @@ test('Somlink shows inside the existing dashboard two-column physical devices gr
 test('Somlink card is read-only until server configuration and manual permission', () => {
   assert.match(virtualDevice, /api\/public\/somlink-status/);
   assert.match(virtualDevice, /data\.configured === true/);
-  assert.match(virtualDevice, /if \(configured !== true\) return null/);
-  assert.match(virtualDevice, /can\('manage_settings'\) && can\('manual_transactions'\)/);
+  assert.match(virtualDevice, /from\('providers_config'\)/);
+  assert.match(virtualDevice, /provider\.provider_name\.trim\(\)\.toLowerCase\(\) === 'somlink'/);
+  assert.match(virtualDevice, /if \(providerAvailable !== true\) return null/);
+  assert.match(virtualDevice, /configured === false \? 'Setup needed'/);
+  assert.doesNotMatch(virtualDevice, /if \(configured !== true\) return null/);
+  assert.match(virtualDevice, /const canManual = can\('manage_settings'\)/);
+  assert.match(virtualDevice, /configured === true && <SomlinkManualView/);
   assert.match(virtualDevice, /disabled=\{loading \|\| !canManual\}/);
   assert.match(virtualDevice, /Last reported/);
   assert.match(virtualDevice, /Not live/);
@@ -54,4 +59,11 @@ test('manual sending verifies Somlink 64 prefix, API bundle and amount before pa
   assert.match(manualServer, /\.gt\("cost_price", 0\)/);
   assert.match(manualServer, /\.gt\("selling_price", 0\.01\)/);
   assert.match(manualServer, /supabase\.rpc\("is_admin"\)/);
+});
+
+test('Somlink status route is read-only and never exposes secrets', () => {
+  const route = read('src/routes/api/public/somlink-status.ts');
+  assert.match(route, /Cache-Control': 'no-store'/);
+  assert.match(route, /somlink_configured: Boolean\(process.env.SOMLINK_WALLET_PHONE/);
+  assert.doesNotMatch(route, /POST:/);
 });

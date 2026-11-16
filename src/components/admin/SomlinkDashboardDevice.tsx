@@ -10,11 +10,34 @@ import somlinkLogo from '@/assets/providers/somlink-logo.png';
 export function SomlinkDashboardDevice({ isSo }: { isSo: boolean }) {
   const { can, loading } = useAdminPermissions();
   const [configured, setConfigured] = useState<boolean | null>(null);
+  const [providerAvailable, setProviderAvailable] = useState<boolean | null>(null);
   const [open, setOpen] = useState(false);
   const [balance, setBalance] = useState<number | null>(null);
   const [balanceAt, setBalanceAt] = useState<string | null>(null);
   const canViewBalance = can('view_profit');
-  const canManual = can('manage_settings') && can('manual_transactions');
+  // This is the same permission used by the existing Somlink Manual Send page.
+  const canManual = can('manage_settings');
+
+  useEffect(() => {
+    let active = true;
+    // The provider's existence is independent of Cloudflare runtime secrets.
+    // A missing/failed status endpoint must not hide an active Somlink SIM card.
+    const checkProvider = async () => {
+      try {
+        const { data, error } = await supabase.from('providers_config')
+          .select('id,provider_name,is_active').eq('is_active', true);
+        if (error) throw error;
+        if (active) setProviderAvailable((data || []).some(provider =>
+          provider.provider_name.trim().toLowerCase() === 'somlink'
+        ));
+      } catch {
+        if (active) setProviderAvailable(null);
+      }
+    };
+    void checkProvider();
+    window.addEventListener('focus', checkProvider);
+    return () => { active = false; window.removeEventListener('focus', checkProvider); };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -51,8 +74,9 @@ export function SomlinkDashboardDevice({ isSo }: { isSo: boolean }) {
     return () => { active = false; };
   }, [configured, canViewBalance, loading, open]);
 
-  // This route checks configured secrets, not a live provider connection.
-  if (configured !== true) return null;
+  // Show the card for an active Somlink provider, even when API status is
+  // unavailable or credentials require setup. Never label that as "Live".
+  if (providerAvailable !== true) return null;
 
   return (
     <>
@@ -66,8 +90,10 @@ export function SomlinkDashboardDevice({ isSo }: { isSo: boolean }) {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1 flex-wrap">
                 <span className="font-bold text-gray-900 dark:text-white text-xs truncate">Somlink API</span>
-                <span className="inline-flex items-center gap-0.5 px-1 py-px rounded-full text-[8px] font-semibold bg-blue-100 text-blue-700">
-                  <span className="w-1 h-1 rounded-full bg-blue-500" />Configured
+                <span className={'inline-flex items-center gap-0.5 px-1 py-px rounded-full text-[8px] font-semibold ' +
+                  (configured === true ? 'bg-blue-100 text-blue-700' : configured === false ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600')}>
+                  <span className={'w-1 h-1 rounded-full ' + (configured === true ? 'bg-blue-500' : configured === false ? 'bg-amber-500' : 'bg-gray-400')} />
+                  {configured === true ? 'Configured' : configured === false ? 'Setup needed' : 'Not verified'}
                 </span>
               </div>
               <div className="text-[8px] text-gray-400 truncate">Virtual API · {isSo ? 'Ma aha Android SIM' : 'Not an Android SIM'}</div>
@@ -113,7 +139,14 @@ export function SomlinkDashboardDevice({ isSo }: { isSo: boolean }) {
             <DialogTitle>{isSo ? 'Somlink — Dalab Manual' : 'Somlink — Manual Send'}</DialogTitle>
             <DialogDescription>{isSo ? 'Marka hore dooro category, kadib xirmada iyo lambar 64XXXXXXX.' : 'Choose category, bundle and recipient 64XXXXXXX.'}</DialogDescription>
           </DialogHeader>
-          {open && <SomlinkManualView isSo={isSo} embedded onSuccess={() => setOpen(false)} />}
+          {open && configured !== true && (
+            <p role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+              {isSo
+                ? 'Somlink API lama xaqiijin. Hubi credentials-ka server-ka; dalab lacag jaraya lama diri karo ilaa API-ga la diyaariyo.'
+                : 'Somlink API setup is not verified. Check server credentials before sending a paid order.'}
+            </p>
+          )}
+          {open && configured === true && <SomlinkManualView isSo={isSo} embedded onSuccess={() => setOpen(false)} />}
         </DialogContent>
       </Dialog>
     </>
